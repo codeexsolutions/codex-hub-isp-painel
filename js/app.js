@@ -130,9 +130,11 @@
     // carrega tema, banners e parcerias em paralelo
     await Promise.all([preencherTabTema(), renderBanners(), renderAnuncios(), renderIndicacoes(), renderAvaliacoes()]);
     trocarTab("provedor");
+    iniciarAutoRefresh();
   }
 
   $("#btn-sair").addEventListener("click", () => {
+    pararAutoRefresh();
     Sessao.sair();
     provedorAtual = null;
     $("#tela-painel").classList.add("hidden");
@@ -140,6 +142,61 @@
     $("#form-login").reset();
     mostrarLogin();
   });
+
+  /* ============================================================
+   *  ATUALIZAÇÃO SEM SAIR / SEM RELOGAR
+   *  - botão manual: atualiza só a aba visível na hora
+   *  - automática: reatualiza as abas de listagem a cada 30s,
+   *    pulando quando a aba do navegador está em segundo plano
+   * ============================================================*/
+  const RENDERERS = {
+    banners: renderBanners,
+    anuncios: renderAnuncios,
+    indicacoes: renderIndicacoes,
+    avaliacoes: renderAvaliacoes,
+  };
+  // provedor/tema ficam de fora: têm formulário aberto, reatualizar sozinho
+  // apagaria o que o usuário está digitando
+  const ABAS_AUTO_REFRESH = ["banners", "anuncios", "indicacoes", "avaliacoes"];
+  const INTERVALO_AUTO_REFRESH_MS = 30000;
+
+  let abaAtiva = "provedor";
+  let autoRefreshTimer = null;
+
+  async function atualizarAba(nome, opts) {
+    opts = opts || {};
+    const manual = !!opts.manual;
+    const render = RENDERERS[nome];
+    if (!render) return; // aba sem lista (provedor/tema) — nada a atualizar aqui
+    const btn = $("#btn-atualizar");
+    if (manual && btn) { btn.disabled = true; btn.classList.add("girando"); }
+    try {
+      await render();
+      if (manual) toast("Atualizado");
+    } catch (err) {
+      if (manual) toast(err.message || "Erro ao atualizar");
+    } finally {
+      if (manual && btn) { btn.disabled = false; btn.classList.remove("girando"); }
+    }
+  }
+
+  function iniciarAutoRefresh() {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(() => {
+      if (document.hidden) return; // aba do navegador em segundo plano — não gasta chamada
+      if (!ABAS_AUTO_REFRESH.includes(abaAtiva)) return;
+      atualizarAba(abaAtiva);
+    }, INTERVALO_AUTO_REFRESH_MS);
+  }
+  function pararAutoRefresh() {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+
+  // botão manual — adicione no HTML algo como:
+  // <button id="btn-atualizar" class="btn-ico" title="Atualizar">🔄</button>
+  const btnAtualizarEl = $("#btn-atualizar");
+  if (btnAtualizarEl) btnAtualizarEl.addEventListener("click", () => atualizarAba(abaAtiva, { manual: true }));
 
   /* ============================================================
    *  NAVEGAÇÃO ENTRE ABAS
@@ -160,6 +217,14 @@
     const [titulo, sub] = TITULOS_TAB[nome];
     $("#topbar-titulo").textContent = titulo;
     $("#topbar-sub").textContent = sub;
+
+    abaAtiva = nome;
+    // ao entrar numa aba de listagem, já busca a versão mais recente
+    if (ABAS_AUTO_REFRESH.includes(nome)) atualizarAba(nome);
+
+    // mostra o botão de atualizar só nas abas que têm o que atualizar
+    const btnAtualizar = $("#btn-atualizar");
+    if (btnAtualizar) btnAtualizar.classList.toggle("hidden", !ABAS_AUTO_REFRESH.includes(nome));
   }
   $$(".side-item").forEach((b) => b.addEventListener("click", () => trocarTab(b.dataset.tab)));
 
@@ -427,7 +492,7 @@
   });
 
   /* ============================================================
-   *  TAB: PARCERIAS
+   *  TAB: ANÚNCIOS
    * ============================================================*/
   async function renderAnuncios() {
     const wrap = $("#lista-anuncios");
@@ -460,12 +525,15 @@
     wrap.querySelectorAll("[data-editar-anuncio]").forEach((btn) =>
       btn.addEventListener("click", () => abrirModalAnuncio(btn.dataset.editarAnuncio, lista))
     );
+    // CORRIGIDO: antes lia dataset.excluirParceria (não existe mais) e chamava
+    // renderAnuncio() (sem "s", função inexistente) — os dois quebravam o
+    // fluxo de excluir + atualizar a lista.
     wrap.querySelectorAll("[data-excluir-anuncio]").forEach((btn) =>
       btn.addEventListener("click", async () => {
         if (!confirm("Excluir este anuncio? Esta ação não pode ser desfeita.")) return;
         try {
-          await Anuncios.remover(btn.dataset.excluirParceria);
-          await renderAnuncio();
+          await Anuncios.remover(btn.dataset.excluirAnuncio);
+          await renderAnuncios();
           toast("Anuncio excluído");
         } catch (err) {
           toast(err.message || "Erro ao excluir anuncio");
@@ -544,147 +612,94 @@
  * TAB: INDICAÇÕES
  * ============================================================ */
 
-async function renderIndicacoes() {
-
+  async function renderIndicacoes() {
     const tbody = $("#lista-indicacoes");
-
     try {
-
-        const itens = await Indicacoes.listar(provedorAtual.id);
-
-        if (!itens.length) {
-            tbody.innerHTML = `
-                <tr class="tabela-vazia">
-                    <td colspan="4">
-                        Nenhuma indicação encontrada.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tbody.innerHTML = itens.map(i => `
-          <tr class="indicacao-row">
-
-    <td>
-        <div class="cliente-info">
-            <div class="cliente-avatar">
-                ${esc(i.nome_cliente).charAt(0).toUpperCase()}
-            </div>
-
-            <div>
-                <div class="cliente-nome">
-                    ${esc(i.nome_cliente)}
-                </div>
-
-                <div class="cliente-label">
-                    Cliente
-                </div>
-            </div>
-        </div>
-    </td>
-
-    <td>
-        <div class="cliente-info">
-            <div class="cliente-avatar indicado">
-                ${esc(i.indicado).charAt(0).toUpperCase()}
-            </div>
-
-            <div>
-                <div class="cliente-nome">
-                    ${esc(i.indicado)}
-                </div>
-
-                <div class="cliente-label">
-                    Indicado
-                </div>
-            </div>
-        </div>
-    </td>
-
-    <td>
-        <span class="badge-contato">
-            📞 ${esc(formatarTelefone(i.contato))}
-        </span>
-    </td>
-
-    <td>
-        <div class="mensagem-box">
-            ${esc(i.mensagem || "Nenhuma mensagem enviada")}
-        </div>
-    </td>
-
-</tr>
-        `).join("");
-
-    } catch (err) {
-
+      const itens = await Indicacoes.listar(provedorAtual.id);
+      if (!itens.length) {
         tbody.innerHTML = `
-            <tr class="tabela-vazia">
-                <td colspan="4">
-                    Erro ao carregar indicações.
-                </td>
-            </tr>
+          <tr class="tabela-vazia">
+            <td colspan="4">Nenhuma indicação encontrada.</td>
+          </tr>
         `;
-
+        return;
+      }
+      tbody.innerHTML = itens.map(i => `
+        <tr class="indicacao-row">
+          <td>
+            <div class="cliente-info">
+              <div class="cliente-avatar">${esc(i.nome_cliente).charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="cliente-nome">${esc(i.nome_cliente)}</div>
+                <div class="cliente-label">Cliente</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="cliente-info">
+              <div class="cliente-avatar indicado">${esc(i.indicado).charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="cliente-nome">${esc(i.indicado)}</div>
+                <div class="cliente-label">Indicado</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge-contato">📞 ${esc(formatarTelefone(i.contato))}</span></td>
+          <td><div class="mensagem-box">${esc(i.mensagem || "Nenhuma mensagem enviada")}</div></td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      tbody.innerHTML = `
+        <tr class="tabela-vazia">
+          <td colspan="4">Erro ao carregar indicações.</td>
+        </tr>
+      `;
     }
+  }
 
-}
-
- /* ============================================================
+  /* ============================================================
  * TAB: AVALIAÇÃO
  * ============================================================ */
 
-async function renderAvaliacoes() {
-
+  async function renderAvaliacoes() {
     const tbody = $("#lista-avaliacoes");
-
     try {
-
-        const itens = await Avaliacoes.listar(provedorAtual.id);
-
-        if (!itens.length) {
-            tbody.innerHTML = `
-                <tr class="tabela-vazia">
-                    <td colspan="4">
-                        Nenhuma avaliação encontrada.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tbody.innerHTML = itens.map(i => `
-           <tr>
-            <th scope="row">${i.cliente}</th>
-            <td >
-              <div class="cliente-avatar ">
-                  ${esc(i.nota)}
-              </div>
+      const itens = await Avaliacoes.listar(provedorAtual.id);
+      if (!itens.length) {
+        tbody.innerHTML = `
+          <tr class="tabela-vazia">
+            <td colspan="4">Nenhuma avaliação encontrada.</td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = itens
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .map(i => `
+        <tr>
+            <th scope="row">${esc(i.cliente)}</th>
+            <td>
+                <div class="cliente-avatar">
+                    ${esc(i.nota)}
+                </div>
             </td>
             <td>
-              <div class="mensagem-box">
-                ${esc(i.mensagem || "Nenhuma mensagem enviada")}
-              </div>
+                <div class="mensagem-box">
+                    ${esc(i.mensagem || "Nenhuma mensagem enviada")}
+                </div>
             </td>
             <td>${formataData(i.created_at)}</td>
-          </tr>
-         
-        `).join("");
-
+        </tr>
+    `)
+    .join("")
     } catch (err) {
-
-        tbody.innerHTML = `
-            <tr class="tabela-vazia">
-                <td colspan="4">
-                    Erro ao carregar indicações.
-                </td>
-            </tr>
-        `;
-
+      tbody.innerHTML = `
+        <tr class="tabela-vazia">
+          <td colspan="4">Erro ao carregar indicações.</td>
+        </tr>
+      `;
     }
-
-}
+  }
 
   /* ------------------------------ escape helpers ------------------------------ */
   function esc(str) {
