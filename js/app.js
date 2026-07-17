@@ -7,7 +7,7 @@
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  let provedorAtual = null; // registro completo do provedor logado 
+  let provedorAtual = null;
   let editandoBannerId = null;
   let editandoAnuncioId = null;
 
@@ -15,6 +15,7 @@
   let toastTimer = null;
   function toast(msg) {
     const el = $("#toast");
+    Swal.fire(msg);
     el.textContent = msg;
     el.classList.remove("hidden");
     clearTimeout(toastTimer);
@@ -127,7 +128,6 @@
     $("#tela-painel").classList.remove("hidden");
     $("#side-provedor-nome").textContent = provedor.nome_fantasia || provedor.empresa;
     preencherTabProvedor();
-    // carrega tema, banners e parcerias em paralelo
     await Promise.all([preencherTabTema(), renderBanners(), renderAnuncios(), renderIndicacoes(), renderAvaliacoes()]);
     trocarTab("provedor");
     iniciarAutoRefresh();
@@ -144,10 +144,7 @@
   });
 
   /* ============================================================
-   *  ATUALIZAÇÃO SEM SAIR / SEM RELOGAR
-   *  - botão manual: atualiza só a aba visível na hora
-   *  - automática: reatualiza as abas de listagem a cada 30s,
-   *    pulando quando a aba do navegador está em segundo plano
+   *  AUTO REFRESH
    * ============================================================*/
   const RENDERERS = {
     banners: renderBanners,
@@ -155,8 +152,6 @@
     indicacoes: renderIndicacoes,
     avaliacoes: renderAvaliacoes,
   };
-  // provedor/tema ficam de fora: têm formulário aberto, reatualizar sozinho
-  // apagaria o que o usuário está digitando
   const ABAS_AUTO_REFRESH = ["banners", "anuncios", "indicacoes", "avaliacoes"];
   const INTERVALO_AUTO_REFRESH_MS = 30000;
 
@@ -167,7 +162,7 @@
     opts = opts || {};
     const manual = !!opts.manual;
     const render = RENDERERS[nome];
-    if (!render) return; // aba sem lista (provedor/tema) — nada a atualizar aqui
+    if (!render) return;
     const btn = $("#btn-atualizar");
     if (manual && btn) { btn.disabled = true; btn.classList.add("girando"); }
     try {
@@ -183,7 +178,7 @@
   function iniciarAutoRefresh() {
     clearInterval(autoRefreshTimer);
     autoRefreshTimer = setInterval(() => {
-      if (document.hidden) return; // aba do navegador em segundo plano — não gasta chamada
+      if (document.hidden) return;
       if (!ABAS_AUTO_REFRESH.includes(abaAtiva)) return;
       atualizarAba(abaAtiva);
     }, INTERVALO_AUTO_REFRESH_MS);
@@ -193,8 +188,6 @@
     autoRefreshTimer = null;
   }
 
-  // botão manual — adicione no HTML algo como:
-  // <button id="btn-atualizar" class="btn-ico" title="Atualizar">🔄</button>
   const btnAtualizarEl = $("#btn-atualizar");
   if (btnAtualizarEl) btnAtualizarEl.addEventListener("click", () => atualizarAba(abaAtiva, { manual: true }));
 
@@ -206,8 +199,8 @@
     tema: ["Tema do app", "Cores e logomarca exibidas para os assinantes"],
     banners: ["Banners", "Carrossel de ofertas na tela inicial do app"],
     anuncios: ["Anúncios", "Carrossel de anúncios do aplicativo"],
-    indicacoes: ["Indicações","Clientes que indicaram novos assinantes pelo aplicativo."],
-    avaliacoes: ["Avaliações","Clientes que avaliaram o serviço."],
+    indicacoes: ["Indicações", "Clientes que indicaram novos assinantes pelo aplicativo."],
+    avaliacoes: ["Avaliações", "Clientes que avaliaram o serviço."],
   };
 
   function trocarTab(nome) {
@@ -217,12 +210,8 @@
     const [titulo, sub] = TITULOS_TAB[nome];
     $("#topbar-titulo").textContent = titulo;
     $("#topbar-sub").textContent = sub;
-
     abaAtiva = nome;
-    // ao entrar numa aba de listagem, já busca a versão mais recente
     if (ABAS_AUTO_REFRESH.includes(nome)) atualizarAba(nome);
-
-    // mostra o botão de atualizar só nas abas que têm o que atualizar
     const btnAtualizar = $("#btn-atualizar");
     if (btnAtualizar) btnAtualizar.classList.toggle("hidden", !ABAS_AUTO_REFRESH.includes(nome));
   }
@@ -316,9 +305,9 @@
     return /^#[0-9A-Fa-f]{6}$/.test(v) ? v : null;
   }
 
-  // sincroniza os dois inputs de cor (texto <-> color picker)
   function ligarParCor(textoSel, pickerSel, onChange) {
     const txt = $(textoSel), pick = $(pickerSel);
+    if (!txt || !pick) return; // ← evita crash se o elemento não existir
     txt.addEventListener("input", () => {
       const hex = normalizarHex(txt.value);
       if (hex) pick.value = hex;
@@ -326,6 +315,7 @@
     });
     pick.addEventListener("input", () => { txt.value = pick.value; onChange(); });
   }
+
   ligarParCor("#t-accent", "#t-accent-picker", atualizarPreviewTema);
   ligarParCor("#t-accent2", "#t-accent2-picker", atualizarPreviewTema);
   $("#t-tag").addEventListener("input", atualizarPreviewTema);
@@ -465,7 +455,9 @@
 
   $("#mb-salvar").addEventListener("click", async (e) => {
     const titulo = $("#mb-titulo").value.trim();
-    if (!titulo) { toast("Informe ao menos o título do banner"); return; }
+    if (!titulo){ 
+      toast("Informe ao menos o título do banner"); return; 
+    }
     const dados = {
       selo: $("#mb-selo").value.trim(),
       titulo,
@@ -500,20 +492,30 @@
     try {
       lista = await Anuncios.listar(provedorAtual.id);
     } catch (err) {
-      wrap.innerHTML = `<div class="vazio">Não foi possível carregar as parcerias.<br>${esc(err.message || "")}</div>`;
+      wrap.innerHTML = `<div class="vazio">Não foi possível carregar os anúncios.<br>${esc(err.message || "")}</div>`;
       return;
     }
     if (!lista.length) {
-      wrap.innerHTML = `<div class="vazio"><div class="vazio-emoji">🤝</div>Nenhuma parceria cadastrada ainda.<br>Clique em "+ Nova parceria" para criar a primeira.</div>`;
+      wrap.innerHTML = `<div class="vazio"><div class="vazio-emoji">📢</div>Nenhum anúncio cadastrado ainda.<br>Clique em "+ Novo anúncio" para criar o primeiro.</div>`;
       return;
     }
     wrap.innerHTML = lista.map((p) => `
       <div class="item-card">
-        <div class="parceria-visual" style="background:${esc(p.cor || "#2563EB")}22">${esc(p.emoji || "✨")}</div>
+        <div class="item-tipo ${p.tipo === 'texto' ? 'tipo-texto' : 'tipo-imagem'}">
+          ${p.tipo === 'texto' ? '📝' : '🖼️'}
+        </div>
         <div class="item-corpo">
-          <div class="item-nome">${esc(p.nome || "Sem nome")}</div>
-          <div class="item-sub">${esc(p.beneficios || "")}</div>
-          ${p.link ? `<div class="item-link">🔗 ${esc(p.link)}</div>` : `<div class="item-link" style="color:var(--sub)">Sem link (apenas informativo)</div>`}
+          <div class="item-nome">${esc(p.titulo || "Sem título")}</div>
+          <div class="item-sub">${esc(p.subtitulo || p.descricao || "")}</div>
+          <div class="item-badges">
+            <span class="badge badge-tipo">${p.tipo === 'texto' ? 'Card de texto' : 'Banner com imagem'}</span>
+            <span class="badge ${p.ativo === true || p.ativo === 'true' ? 'badge-ativo' : 'badge-inativo'}">
+              ${p.ativo === true || p.ativo === 'true' ? 'Ativo' : 'Inativo'}
+            </span>
+          </div>
+          ${p.link
+            ? `<div class="item-link">🔗 ${esc(p.link)}</div>`
+            : `<div class="item-link" style="color:var(--sub)">Sem link (apenas informativo)</div>`}
         </div>
         <div class="item-acoes">
           <button class="item-btn" data-editar-anuncio="${p.id}">Editar</button>
@@ -525,18 +527,15 @@
     wrap.querySelectorAll("[data-editar-anuncio]").forEach((btn) =>
       btn.addEventListener("click", () => abrirModalAnuncio(btn.dataset.editarAnuncio, lista))
     );
-    // CORRIGIDO: antes lia dataset.excluirParceria (não existe mais) e chamava
-    // renderAnuncio() (sem "s", função inexistente) — os dois quebravam o
-    // fluxo de excluir + atualizar a lista.
     wrap.querySelectorAll("[data-excluir-anuncio]").forEach((btn) =>
       btn.addEventListener("click", async () => {
-        if (!confirm("Excluir este anuncio? Esta ação não pode ser desfeita.")) return;
+        if (!confirm("Excluir este anúncio? Esta ação não pode ser desfeita.")) return;
         try {
           await Anuncios.remover(btn.dataset.excluirAnuncio);
           await renderAnuncios();
-          toast("Anuncio excluído");
+          toast("Anúncio excluído");
         } catch (err) {
-          toast(err.message || "Erro ao excluir anuncio");
+          toast(err.message || "Erro ao excluir anúncio");
         }
       })
     );
@@ -548,54 +547,91 @@
   function abrirModalAnuncio(id, listaAtual) {
     editandoAnuncioId = id;
     const p = id ? listaAtual.find((x) => x.id === id) : null;
-    $("#modal-anuncio-titulo").textContent = id ? "Editar anuncio" : "Novo anuncio";
-    $("#ma-tipo").value = p?.tipo || "";
-    $("#ma-titulo").value = p?.titulo || "";
+    $("#modal-anuncio-titulo").textContent = id ? "Editar anúncio" : "Novo anúncio";
+    $("#ma-tipo").value    = p?.tipo      || "imagem";
+    $("#ma-titulo").value  = p?.titulo    || "";
     $("#ma-subtitulo").value = p?.subtitulo || "";
     $("#ma-descricao").value = p?.descricao || "";
-    $("#ma-imagem").value = p?.imagem || "";
-    $("#ma-link").value = p?.link || "";
-    $("#ma-ativo").value = p?.ativo || "";
-   // $("#ma-cor").value = p?.cor || "#2563EB";
-    //$("#ma-cor-picker").value = normalizarHex(p?.cor) || "#2563EB";
-    //$("#ma-link").value = p?.link || "";
+    $("#ma-imagem").value  = p?.imagem    || "";
+    $("#ma-link").value    = p?.link      || "";
+    $("#ma-ativo").value   = p?.ativo !== undefined ? String(p.ativo) : "true";
     atualizarPreviewAnuncio();
     abrirModal("#modal-anuncio");
   }
 
-  ligarParCor("#ma-cor", "#ma-cor-picker", atualizarPreviewAnuncio);
-  ["#ma-nome", "#ma-beneficio", "#ma-emoji"].forEach((sel) => $(sel).addEventListener("input", atualizarPreviewAnuncio));
+  // ← SEM ligarParCor aqui: #ma-cor e #ma-cor-picker não existem no HTML
+  ["#ma-tipo", "#ma-titulo", "#ma-subtitulo", "#ma-descricao", "#ma-imagem", "#ma-link", "#ma-ativo"].forEach((sel) => {
+    const el = $(sel);
+    if (el) el.addEventListener("input", atualizarPreviewAnuncio);
+  });
 
   function atualizarPreviewAnuncio() {
-    const cor =  "#2563EB";
-    $("#ma-preview").style.background = cor;
-    $("#ma-preview").innerHTML = `
-      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14.5px;margin-top:4px">${esc($("#ma-tipo").value || "Titulo")}</div>
-      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14.5px;margin-top:4px">${esc($("#ma-subtitulo").value || "Subtitulo")}</div>
-      <div style="font-size:11.5px;opacity:.92">${esc($("#ma-descricao").value)}</div>
+    const tipo      = $("#ma-tipo")?.value || "imagem";
+    const titulo    = $("#ma-titulo")?.value    || "Título do anúncio";
+    const subtitulo = $("#ma-subtitulo")?.value || "";
+    const descricao = $("#ma-descricao")?.value || "";
+    const imagem    = $("#ma-imagem")?.value.trim() || "";
+    const link    = $("#ma-link")?.value.trim() || "";
+    const ativo     = $("#ma-ativo")?.value  || 'true';
+console.log(ativo)
+    const prev = $("#ma-preview");
+    if (!prev) return;
+
+    if (imagem) {
+      prev.style.background = "transparent";
+      prev.style.padding    = "0";
+      prev.style.overflow   = "hidden";
+      prev.innerHTML = `
+        <img src="${escapeAttr(imagem)}"
+             alt="preview"
+             style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block"
+             onerror="this.style.display='none';this.parentElement.style.background='#e0ddd5'" />
+      `;
+      return;
+    }
+
+    prev.style.background = "linear-gradient(135deg,#2563EB,#7C3AED)";
+    prev.style.padding    = "16px";
+    prev.style.overflow   = "";
+    prev.innerHTML = `
+      <div style="font-size:11px;font-weight:700;opacity:.75;letter-spacing:.5px;text-transform:uppercase;color:#fff">
+        ${esc(tipo === "texto" ? "Card de texto" : "Banner")}
+      </div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:15px;margin-top:4px;color:#fff">
+        ${esc(titulo)}
+      </div>
+      ${subtitulo ? `<div style="font-size:12px;opacity:.85;margin-top:2px;color:#fff">${esc(subtitulo)}</div>` : ""}
+      ${descricao ? `<div style="font-size:11.5px;opacity:.75;margin-top:6px;color:#fff">${esc(descricao)}</div>` : ""}
     `;
   }
 
   $("#ma-salvar").addEventListener("click", async (e) => {
-    const nome = $("#ma-nome").value.trim();
-    if (!nome) { toast("Informe ao menos o nome do parceiro"); return; }
+    
+    const titulo = $("#ma-titulo").value.trim();
+    const ativo = $("#ma-ativo").value 
+
+    if (titulo === "") { toast("Informe ao menos o título do anúncio"); return; }
+
     const dados = {
-      nome,
-      beneficio: $("#ma-beneficio").value.trim(),
-      emoji: $("#ma-emoji").value.trim() || "✨",
-      cor: $("#ma-cor").value.trim() || "#2563EB",
-      link: $("#ma-link").value.trim(),
+      tipo:      $("#ma-tipo").value,
+      titulo,
+      subtitulo: $("#ma-subtitulo").value.trim(),
+      descricao: $("#ma-descricao").value.trim(),
+      imagem:    $("#ma-imagem").value.trim() || null,
+      link:      $("#ma-link").value.trim()   || null,
+      ativo:     $("#ma-ativo").value === 'true',
     };
+
     const btn = e.currentTarget;
     btn.disabled = true;
     try {
       if (editandoAnuncioId) await Anuncios.atualizar(editandoAnuncioId, dados);
-      else await Anuncios.criar(provedorAtual.id, dados);
+      else                   await Anuncios.criar(provedorAtual.id, dados);
       fecharModal("#modal-anuncio");
       await renderAnuncios();
-      toast("Anuncio salvo");
+      toast("Anúncio salvo");
     } catch (err) {
-      toast(err.message || "Erro ao salvar anuncio");
+      toast(err.message || "Erro ao salvar anúncio");
     } finally {
       btn.disabled = false;
     }
@@ -609,19 +645,14 @@
   );
 
   /* ============================================================
- * TAB: INDICAÇÕES
- * ============================================================ */
-
+   *  TAB: INDICAÇÕES
+   * ============================================================*/
   async function renderIndicacoes() {
     const tbody = $("#lista-indicacoes");
     try {
       const itens = await Indicacoes.listar(provedorAtual.id);
       if (!itens.length) {
-        tbody.innerHTML = `
-          <tr class="tabela-vazia">
-            <td colspan="4">Nenhuma indicação encontrada.</td>
-          </tr>
-        `;
+        tbody.innerHTML = `<tr class="tabela-vazia"><td colspan="4">Nenhuma indicação encontrada.</td></tr>`;
         return;
       }
       tbody.innerHTML = itens.map(i => `
@@ -649,55 +680,33 @@
         </tr>
       `).join("");
     } catch (err) {
-      tbody.innerHTML = `
-        <tr class="tabela-vazia">
-          <td colspan="4">Erro ao carregar indicações.</td>
-        </tr>
-      `;
+      tbody.innerHTML = `<tr class="tabela-vazia"><td colspan="4">Erro ao carregar indicações.</td></tr>`;
     }
   }
 
   /* ============================================================
- * TAB: AVALIAÇÃO
- * ============================================================ */
-
+   *  TAB: AVALIAÇÕES
+   * ============================================================*/
   async function renderAvaliacoes() {
     const tbody = $("#lista-avaliacoes");
     try {
       const itens = await Avaliacoes.listar(provedorAtual.id);
       if (!itens.length) {
-        tbody.innerHTML = `
-          <tr class="tabela-vazia">
-            <td colspan="4">Nenhuma avaliação encontrada.</td>
-          </tr>
-        `;
+        tbody.innerHTML = `<tr class="tabela-vazia"><td colspan="4">Nenhuma avaliação encontrada.</td></tr>`;
         return;
       }
       tbody.innerHTML = itens
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .map(i => `
-        <tr>
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .map(i => `
+          <tr>
             <th scope="row">${esc(i.cliente)}</th>
-            <td>
-                <div class="cliente-avatar">
-                    ${esc(i.nota)}
-                </div>
-            </td>
-            <td>
-                <div class="mensagem-box">
-                    ${esc(i.mensagem || "Nenhuma mensagem enviada")}
-                </div>
-            </td>
+            <td><div class="cliente-avatar">${esc(i.nota)}</div></td>
+            <td><div class="mensagem-box">${esc(i.mensagem || "Nenhuma mensagem enviada")}</div></td>
             <td>${formataData(i.created_at)}</td>
-        </tr>
-    `)
-    .join("")
+          </tr>
+        `).join("");
     } catch (err) {
-      tbody.innerHTML = `
-        <tr class="tabela-vazia">
-          <td colspan="4">Erro ao carregar indicações.</td>
-        </tr>
-      `;
+      tbody.innerHTML = `<tr class="tabela-vazia"><td colspan="4">Erro ao carregar avaliações.</td></tr>`;
     }
   }
 
@@ -709,7 +718,7 @@
   function escapeJs(str) { return String(str ?? "").replace(/'/g, "\\'"); }
 
   /* ============================================================
-   *  BOOT — retoma sessão se já estiver logado (token válido ou sessão mock)
+   *  BOOT
    * ============================================================*/
   (async () => {
     const sessaoAtual = await Sessao.atual();

@@ -10,10 +10,12 @@
  * Nenhuma outra parte do painel (app.js) precisa mudar — os métodos abaixo
  * têm a MESMA assinatura nos dois modos.
  * ==========================================================================*/
+// "http://192.168.1.21:3010/v1",//
 
 const CONFIG = {
   API_BASE: "https://codex-hub-isp-api-production.up.railway.app/v1", // troque pela URL real em produção
   USE_API: true, // true = consome a API real; false = localStorage (mock)
+
 };
 
 const DB_KEYS = {
@@ -341,7 +343,7 @@ const Banners = {
   },
 
   async criar(provedorId, dados) {
-    if (CONFIG.USE_API) { const json = await request("/banners", { method: "POST", body: JSON.stringify(dados) }); return extrairData(json); }
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/banners", { method: "POST", body: JSON.stringify(dados) }); return extrairData(json); }
     const lista = ler(DB_KEYS.banners);
     const novo = { id: uid(), provedor_id: provedorId, ...dados };
     lista.push(novo);
@@ -350,7 +352,7 @@ const Banners = {
   },
 
   async atualizar(id, patch) {
-    if (CONFIG.USE_API) { const json = await request(`/provedores/painel/banners/${id}`, { method: "PATCH", body: JSON.stringify(patch) }); return extrairData(json); }
+    if (CONFIG.USE_API) { const json = await request(`/painel/provedor/banners/${id}`, { method: "PATCH", body: JSON.stringify(patch) }); return extrairData(json); }
     const lista = ler(DB_KEYS.banners);
     const i = lista.findIndex((b) => b.id === id);
     if (i === -1) throw new Error("Banner não encontrado.");
@@ -360,7 +362,7 @@ const Banners = {
   },
 
   async remover(id) {
-    if (CONFIG.USE_API) { await request(`/banners/${id}`, { method: "DELETE" }); return; }
+    if (CONFIG.USE_API) { await request(`/painel/provedor/banners/${id}`, { method: "DELETE" }); return; }
     gravar(DB_KEYS.banners, ler(DB_KEYS.banners).filter((b) => b.id !== id));
   },
 };
@@ -378,7 +380,7 @@ const Anuncios = {
   },
 
   async criar(provedorId, dados) {
-    if (CONFIG.USE_API) { const json = await request("/provedores/painel/parcerias/me", { method: "POST", body: JSON.stringify(dados) }); return extrairData(json); }
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/anuncios", { method: "POST", body: JSON.stringify(dados) }); return extrairData(json); }
     const lista = ler(DB_KEYS.anuncios);
     const novo = { id: uid(), provedor_id: provedorId, ...dados };
     lista.push(novo);
@@ -387,17 +389,17 @@ const Anuncios = {
   },
 
   async atualizar(id, patch) {
-    if (CONFIG.USE_API) { const json = await request(`/parcerias/${id}`, { method: "PATCH", body: JSON.stringify(patch) }); return extrairData(json); }
+    if (CONFIG.USE_API) { const json = await request(`/painel/provedor/anuncios/${id}`, { method: "PATCH", body: JSON.stringify(patch) }); return extrairData(json); }
     const lista = ler(DB_KEYS.parcerias);
     const i = lista.findIndex((p) => p.id === id);
-    if (i === -1) throw new Error("Parceria não encontrada.");
+    if (i === -1) throw new Error("Anuncio não encontrado.");
     lista[i] = { ...lista[i], ...patch };
     gravar(DB_KEYS.parcerias, lista);
     return lista[i];
   },
 
   async remover(id) {
-    if (CONFIG.USE_API) { await request(`/parcerias/${id}`, { method: "DELETE" }); return; }
+    if (CONFIG.USE_API) { await request(`/painel/provedor/anuncios/${id}`, { method: "DELETE" }); return; }
     gravar(DB_KEYS.parcerias, ler(DB_KEYS.parcerias).filter((p) => p.id !== id));
   },
 };
