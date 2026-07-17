@@ -1,15 +1,4 @@
-/* ============================================================================
- * store.js — camada de dados do painel HUB ISP.
- *
- * Dois modos, controlados por CONFIG.USE_API:
- *  - USE_API = false (padrão) -> tudo em localStorage, roda sem backend.
- *  - USE_API = true           -> consome a API real (mesmo backend do PWA),
- *                                 autenticação via JWT (Bearer token).
- *
- * Quando suas rotas existirem: ajuste CONFIG.API_BASE e vire USE_API = true.
- * Nenhuma outra parte do painel (app.js) precisa mudar — os métodos abaixo
- * têm a MESMA assinatura nos dois modos.
- * ==========================================================================*/
+
 // "http://192.168.1.21:3010/v1",//
 
 const CONFIG = {

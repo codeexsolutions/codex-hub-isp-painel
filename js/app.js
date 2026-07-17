@@ -602,6 +602,7 @@ console.log(ativo)
       </div>
       ${subtitulo ? `<div style="font-size:12px;opacity:.85;margin-top:2px;color:#fff">${esc(subtitulo)}</div>` : ""}
       ${descricao ? `<div style="font-size:11.5px;opacity:.75;margin-top:6px;color:#fff">${esc(descricao)}</div>` : ""}
+      ${ativo}
     `;
   }
 
@@ -610,6 +611,7 @@ console.log(ativo)
     const titulo = $("#ma-titulo").value.trim();
     const ativo = $("#ma-ativo").value 
 
+    console.log(ativo)
     if (titulo === "") { toast("Informe ao menos o título do anúncio"); return; }
 
     const dados = {
