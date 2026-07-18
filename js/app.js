@@ -228,6 +228,8 @@
     $("#p-admin").value = p.nome_administrador || "";
     $("#p-status").value = p.status || "ATIVO";
     $("#p-codigo-provedor").value = p.codigo_provedor ?? "";
+    $("#p-usuario").value = p.usuario ?? "";
+    $("#p-senha").value = p.senha ?? "";
     $("#p-gerenciador").value = p.gerenciador || "RECEITANET";
     $("#p-codigo-api").value = p.codigo_api_gerenciador ?? "";
     $("#p-dominio-ixc").value = p.dominio_ixc || "";
@@ -253,6 +255,8 @@
       nome_fantasia: $("#p-nome-fantasia").value.trim() || null,
       cnpj: $("#p-cnpj").value.trim(),
       nome_administrador: $("#p-admin").value.trim(),
+      usuario: $("#p-usuario").value,
+      senha: $("#p-senha").value,
       status: $("#p-status").value,
       gerenciador: $("#p-gerenciador").value,
       codigo_api_gerenciador: $("#p-codigo-api").value ? Number($("#p-codigo-api").value) : null,
