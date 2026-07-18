@@ -2,7 +2,7 @@
 // "http://192.168.1.21:3010/v1",//
 
 const CONFIG = {
-  API_BASE: "https://codex-hub-isp-api-production.up.railway.app/v1", // troque pela URL real em produção
+  API_BASE: "http://192.168.18.188:3010/v1", //"https://codex-hub-isp-api-production.up.railway.app/v1", // troque pela URL real em produção
   USE_API: true, // true = consome a API real; false = localStorage (mock)
 
 };

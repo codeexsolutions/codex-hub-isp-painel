@@ -499,12 +499,16 @@
       wrap.innerHTML = `<div class="vazio"><div class="vazio-emoji">📢</div>Nenhum anúncio cadastrado ainda.<br>Clique em "+ Novo anúncio" para criar o primeiro.</div>`;
       return;
     }
+    console.log(lista[0])
     wrap.innerHTML = lista.map((p) => `
       <div class="item-card">
         <div class="item-tipo ${p.tipo === 'texto' ? 'tipo-texto' : 'tipo-imagem'}">
           ${p.tipo === 'texto' ? '📝' : '🖼️'}
         </div>
         <div class="item-corpo">
+          <div class="item-image">
+            <img src='${resolveImageUrl(p.link_imagem)}'  style="width:100%; height:100%; object-fit:cover; display:block;"/>
+          </div>
           <div class="item-nome">${esc(p.titulo || "Sem título")}</div>
           <div class="item-sub">${esc(p.subtitulo || p.descricao || "")}</div>
           <div class="item-badges">
@@ -513,8 +517,8 @@
               ${p.ativo === true || p.ativo === 'true' ? 'Ativo' : 'Inativo'}
             </span>
           </div>
-          ${p.link
-            ? `<div class="item-link">🔗 ${esc(p.link)}</div>`
+          ${p.link_acao
+            ? `<div class="item-link">🔗 ${esc(p.link_acao)}</div>`
             : `<div class="item-link" style="color:var(--sub)">Sem link (apenas informativo)</div>`}
         </div>
         <div class="item-acoes">
@@ -547,13 +551,14 @@
   function abrirModalAnuncio(id, listaAtual) {
     editandoAnuncioId = id;
     const p = id ? listaAtual.find((x) => x.id === id) : null;
+    console.log(listaAtual)
     $("#modal-anuncio-titulo").textContent = id ? "Editar anúncio" : "Novo anúncio";
     $("#ma-tipo").value    = p?.tipo      || "imagem";
     $("#ma-titulo").value  = p?.titulo    || "";
     $("#ma-subtitulo").value = p?.subtitulo || "";
     $("#ma-descricao").value = p?.descricao || "";
-    $("#ma-imagem").value  = p?.imagem    || "";
-    $("#ma-link").value    = p?.link      || "";
+    $("#ma-imagem").value  = p?.link_imagem    || "";
+    $("#ma-link").value    = p?.link_acao      || "";
     $("#ma-ativo").value   = p?.ativo !== undefined ? String(p.ativo) : "true";
     atualizarPreviewAnuncio();
     abrirModal("#modal-anuncio");
@@ -573,7 +578,7 @@
     const imagem    = $("#ma-imagem")?.value.trim() || "";
     const link    = $("#ma-link")?.value.trim() || "";
     const ativo     = $("#ma-ativo")?.value  || 'true';
-console.log(ativo)
+
     const prev = $("#ma-preview");
     if (!prev) return;
 
@@ -595,23 +600,23 @@ console.log(ativo)
     prev.style.overflow   = "";
     prev.innerHTML = `
       <div style="font-size:11px;font-weight:700;opacity:.75;letter-spacing:.5px;text-transform:uppercase;color:#fff">
-        ${esc(tipo === "texto" ? "Card de texto" : "Banner")}
+        ${esc(tipo === "texto" ? "Card de texto" : "Anuncio")}
       </div>
       <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:15px;margin-top:4px;color:#fff">
         ${esc(titulo)}
       </div>
       ${subtitulo ? `<div style="font-size:12px;opacity:.85;margin-top:2px;color:#fff">${esc(subtitulo)}</div>` : ""}
       ${descricao ? `<div style="font-size:11.5px;opacity:.75;margin-top:6px;color:#fff">${esc(descricao)}</div>` : ""}
-      ${ativo}
+      ${imagem ? `<div style="font-size:11.5px;opacity:.75;margin-top:6px;color:#fff">${esc(imagem)}</div>` : ""}
+      ${link ? `<div style="font-size:11.5px;opacity:.75;margin-top:6px;color:#fff">${esc(link)}</div>` : ""}
+      ${ativo ? `<div style="font-size:11.5px;opacity:.75;margin-top:6px;color:#fff">${esc(ativo)}</div>` : ""}
     `;
   }
 
   $("#ma-salvar").addEventListener("click", async (e) => {
     
     const titulo = $("#ma-titulo").value.trim();
-    const ativo = $("#ma-ativo").value 
-
-    console.log(ativo)
+   
     if (titulo === "") { toast("Informe ao menos o título do anúncio"); return; }
 
     const dados = {

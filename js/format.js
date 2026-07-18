@@ -42,3 +42,22 @@ function formataData(data) {
     });
 
 }
+
+const resolveImageUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+
+  // Extrai o ID do arquivo dos formatos mais comuns do Drive
+  const match =
+    url.match(/\/file\/d\/([^/]+)/) ||     // .../file/d/ID/view
+    url.match(/[?&]id=([^&]+)/) ||          // ...?id=ID  /  open?id=ID
+    url.match(/\/d\/([^/]+)/);             // .../d/ID
+
+  if (match && url.includes("drive.google.com")) {
+    const id = match[1];
+    // thumbnail é o endpoint mais confiável para embutir imagem
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w2048`;
+    // alternativa: return `https://lh3.googleusercontent.com/d/${id}=w1600`;
+  }
+
+  return url; // não é Drive: retorna como está
+};
