@@ -3,7 +3,7 @@
 // "http://192.168.18.188:3010/v1",
 
 const CONFIG = {
-  API_BASE: "https://codex-hub-isp-api-production.up.railway.app/v1", 
+  API_BASE: "http://192.168.18.188:3010/v1",//"https://codex-hub-isp-api-production.up.railway.app/v1", 
   USE_API: true,
 
 };
@@ -86,6 +86,7 @@ function normalizarProvedor(raw) {
     cnpj: raw.CpfCnpj,
     dominio_ixc: raw.DominioIxc ?? null,
     usuario: raw.Usuario,
+    senha: raw._Senha,
   };
 }
 
@@ -254,7 +255,9 @@ const Provedores = {
 
   async atualizar(id, patch) {
     if (CONFIG.USE_API) {
+      console.log(patch)
       const json = await request("/painel/provedor/atualizar", { method: "PATCH", body: JSON.stringify(patch) });
+      console.log(json)
       const provedor = normalizarProvedor(extrairData(json));
       localStorage.setItem(DB_KEYS.provedorCache, JSON.stringify(provedor));
       return provedor;

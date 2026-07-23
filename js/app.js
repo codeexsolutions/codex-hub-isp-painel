@@ -221,6 +221,7 @@
    *  TAB: PROVEDOR
    * ============================================================*/
   function preencherTabProvedor() {
+    
     const p = provedorAtual;
     $("#p-empresa").value = p.empresa || "";
     $("#p-nome-fantasia").value = p.nome_fantasia || "";
@@ -234,6 +235,7 @@
     $("#p-codigo-api").value = p.codigo_api_gerenciador ?? "";
     $("#p-dominio-ixc").value = p.dominio_ixc || "";
     $("#p-chave-api").value = p.chave_api_gerenciador || "";
+    //$("#p-senha").value = p.senha || "";
     atualizarStatusTopbar(p.status);
   }
 
@@ -247,6 +249,13 @@
     const inp = $("#p-chave-api");
     inp.type = inp.type === "password" ? "text" : "password";
   });
+
+  $("#toggle-senha").addEventListener("click", () => {
+    const inp = $("#p-senha");
+    inp.type = inp.type === "password" ? "text" : "password";
+  });
+
+  
 
   $("#salvar-provedor").addEventListener("click", async (e) => {
     const btn = e.currentTarget;
