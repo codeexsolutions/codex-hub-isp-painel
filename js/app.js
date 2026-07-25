@@ -374,6 +374,11 @@
       accent2: $("#t-accent2").value.trim() || "#7C3AED",
       logo_url: $("#t-logo").value.trim() || null,
       glyph: $("#t-glyph").value.trim() || null,
+      logo: $("#t-logo").files[0] || null,
+      favicon: $("#t-favicon").files[0] || null,
+      icon192: $("#t-icon192").files[0] || null,
+      icon512: $("#t-icon512").files[0] || null,
+      maskable: $("#t-maskable").files[0] || null,
     };
     btn.disabled = true;
     try {

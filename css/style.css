@@ -355,3 +355,29 @@ textarea.fld { resize: vertical; min-height: 70px; }
 }
 .tipo-imagem { background: #E6F1FB; }
 .tipo-texto  { background: #EAF3DE; }
+
+.onboarding-info{
+    margin:24px 0;
+    padding:18px;
+    border:1px solid #E5E7EB;
+    border-radius:14px;
+    background:#F8FAFC;
+}
+
+.onboarding-title{
+    font-size:15px;
+    font-weight:700;
+    color:#0F172A;
+    margin-bottom:10px;
+}
+
+.onboarding-info ul{
+    margin:0;
+    padding-left:18px;
+}
+
+.onboarding-info li{
+    color:#64748B;
+    margin:6px 0;
+    font-size:14px;
+}

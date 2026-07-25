@@ -1,9 +1,9 @@
-
+//  "https://codex-hub-isp-api-production.up.railway.app/v1" 
 // "http://192.168.1.21:3010/v1",
 // "http://192.168.18.188:3010/v1",
 
 const CONFIG = {
-  API_BASE: "https://codex-hub-isp-api-production.up.railway.app/v1", 
+  API_BASE:"http://192.168.18.188:3010/v1", 
   USE_API: true,
 
 };
@@ -92,28 +92,41 @@ function normalizarProvedor(raw) {
 
 /* ------------------------------ chamada HTTP (modo API) ------------------------------ */
 async function request(path, options = {}) {
+
   const token = localStorage.getItem(DB_KEYS.token);
+
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {})
+  };
+
+  // Só adiciona application/json se NÃO for FormData
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  
   const res = await fetch(`${CONFIG.API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
     ...options,
+    headers
   });
 
   const texto = await res.text();
+
   let json = null;
-  try { json = texto ? JSON.parse(texto) : null; } catch { /* corpo não era JSON */ }
+  try {
+    json = texto ? JSON.parse(texto) : null;
+  } catch {}
 
   if (res.status === 401) {
     localStorage.removeItem(DB_KEYS.token);
     localStorage.removeItem(DB_KEYS.provedorCache);
     throw new Error((json && json.message) || "Sessão expirada. Faça login novamente.");
   }
+
   if (!res.ok) {
     throw new Error((json && json.message) || texto || `Erro ${res.status}`);
   }
+
   return json;
 }
 
@@ -305,22 +318,46 @@ const Temas = {
   },
 
   async salvar(codigoProvedor, dados) {
-    if (CONFIG.USE_API) {
-      const json = await request("/painel/provedor/temas", { method: "PUT", body: JSON.stringify(dados) });
-      return extrairData(json);
+
+  console.log("DADOS", dados)
+  if (CONFIG.USE_API) {
+
+    const form = new FormData();
+
+    form.append("codigo_provedor_fk", codigoProvedor);
+    form.append("nome_fantasia", dados.nome_fantasia);
+    form.append("tag", dados.tag);
+    form.append("accent", dados.accent);
+    form.append("accent2", dados.accent2);
+    form.append("glyph", dados.glyph);
+
+    if (dados.logo)
+      form.append("logo", dados.logo);
+
+    if (dados.favicon)
+      form.append("favicon", dados.favicon);
+
+    if (dados.icon192)
+      form.append("icon192", dados.icon192);
+
+    if (dados.icon512)
+      form.append("icon512", dados.icon512);
+
+    if (dados.maskable)
+      form.append("maskable", dados.maskable);
+
+    for (const [key, value] of form.entries()) {
+      console.log(key, value);
     }
-    const lista = ler(DB_KEYS.temas);
-    const i = lista.findIndex((t) => t.codigo_provedor_fk === codigoProvedor);
-    if (i === -1) {
-      const novo = { idx: lista.length, id: lista.length + 1, created_at: agoraISO(), codigo_provedor_fk: codigoProvedor, ...dados };
-      lista.push(novo);
-      gravar(DB_KEYS.temas, lista);
-      return novo;
-    }
-    lista[i] = { ...lista[i], ...dados };
-    gravar(DB_KEYS.temas, lista);
-    return lista[i];
-  },
+    const json = await request("/painel/provedor/temas", {
+      method: "PUT",
+      body: form
+    });
+
+    return extrairData(json);
+  }
+
+}
 };
 
 /* =============================== BANNERS ===============================

@@ -49,7 +49,11 @@
     <!-- ---- CADASTRO INICIAL ---- -->
     <form id="form-cadastro" class="auth-form hidden">
       <h1>Cadastrar provedor</h1>
-      <p class="auth-lead">Preencha os dados obrigatórios para criar seu acesso. Você completa o restante depois, no painel.</p>
+      <p class="auth-subtitle">
+  Informe os dados básicos para criar sua conta no HUB ISP.
+  Após o primeiro acesso, você poderá personalizar sua Central do Assinante,
+  configurar a integração com seu gerenciador e publicar seu aplicativo.
+</p>
 
       <label class="fld-label">Empresa <span class="req">*</span></label>
       <input class="fld" id="cad-empresa" placeholder="Razão social da empresa" required />
@@ -84,7 +88,18 @@
       </div>
 
       <div class="fld-erro" id="cadastro-erro"></div>
+      <div class="onboarding-info">
+    <div class="onboarding-title">
+        Próximos passos
+    </div>
 
+    <ul>
+        <li>✔ Personalizar a identidade visual da Central.</li>
+        <li>✔ Enviar logo, favicon e ícones do aplicativo (PWA).</li>
+        <li>✔ Configurar a integração com o gerenciador.</li>
+        <li>✔ Publicar a Central do Assinante.</li>
+    </ul>
+</div>
       <button type="submit" class="btn btn-primary btn-block">Criar cadastro e acessar o painel</button>
       <button type="button" class="btn-link" id="ir-login">Já tenho provedor cadastrado</button>
     </form>
@@ -232,63 +247,140 @@
       </section>
 
       <!-- ---- TAB: TEMA ---- -->
-      <section class="tab-panel hidden" id="tab-tema">
-        <div class="grid-2">
-          <div class="painel-card">
-            <div class="card-titulo">Identidade visual</div>
+<section class="tab-panel hidden" id="tab-tema">
+  <div class="grid-2">
 
-            <label class="fld-label">Tag (frase da marca)</label>
-            <input class="fld" id="t-tag" placeholder="ex.: Internet Fibra" />
+    <div class="painel-card">
+      <div class="card-titulo">Identidade visual</div>
 
-            <div class="fld-row">
-              <div>
-                <label class="fld-label">Cor principal (accent)</label>
-                <div class="fld-cor">
-                  <input type="color" id="t-accent-picker" />
-                  <input class="fld" id="t-accent" placeholder="#DB5F00" />
-                </div>
-              </div>
-              <div>
-                <label class="fld-label">Cor secundária (accent2)</label>
-                <div class="fld-cor">
-                  <input type="color" id="t-accent2-picker" />
-                  <input class="fld" id="t-accent2" placeholder="#DB5FFF" />
-                </div>
-              </div>
-            </div>
+      <label class="fld-label">Tag (frase da marca)</label>
+      <input class="fld" id="t-tag" placeholder="ex.: Internet Fibra" />
 
-            <label class="fld-label">URL da logomarca</label>
-            <input class="fld" id="t-logo" placeholder="https://…/logotipo.png" />
-
-            <label class="fld-label">Glifo (ícone alternativo à logo)</label>
-            <input class="fld" id="t-glyph" maxlength="2" placeholder="◈ (opcional, 1 caractere)" />
-            <div class="fld-help">Usado quando não há logo carregada — aparece no header e na tela de login do app.</div>
-          </div>
-
-          <div class="painel-card preview-card">
-            <div class="card-titulo">Pré-visualização no app</div>
-            <div class="phone-mock">
-              <div class="phone-header" id="prev-header">
-                <div class="phone-logo" id="prev-logo">◈</div>
-                <div>
-                  <div class="phone-titulo" id="prev-nome">Sua Empresa</div>
-                  <div class="phone-sub" id="prev-tag">Internet Fibra</div>
-                </div>
-              </div>
-              <div class="phone-card" id="prev-plano">
-                <div class="phone-plano-label">SEU PLANO</div>
-                <div class="phone-plano-nome">200 Mega</div>
-                <div class="phone-plano-preco">R$ 74,90/mês</div>
-              </div>
-            </div>
+      <div class="fld-row">
+        <div>
+          <label class="fld-label">Cor principal (accent)</label>
+          <div class="fld-cor">
+            <input type="color" id="t-accent-picker" />
+            <input class="fld" id="t-accent" placeholder="#DB5F00" />
           </div>
         </div>
 
-        <div class="acoes-fixas">
-          <span class="salvo-em" id="salvo-tema"></span>
-          <button class="btn btn-primary" id="salvar-tema">Salvar tema</button>
+        <div>
+          <label class="fld-label">Cor secundária (accent2)</label>
+          <div class="fld-cor">
+            <input type="color" id="t-accent2-picker" />
+            <input class="fld" id="t-accent2" placeholder="#DB5FFF" />
+          </div>
         </div>
-      </section>
+      </div>
+
+      <hr class="divider">
+
+      <div class="card-subtitulo">
+        Arquivos da identidade visual
+      </div>
+
+      <label class="fld-label">Logomarca</label>
+      <input
+        class="fld"
+        type="file"
+        id="t-logo"
+        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+      />
+
+      <label class="fld-label">Favicon (32x32 ou 48x48)</label>
+      <input
+        class="fld"
+        type="file"
+        id="t-favicon"
+        accept="image/png,image/x-icon,image/svg+xml"
+      />
+
+      <label class="fld-label">Ícone PWA 192x192</label>
+      <input
+        class="fld"
+        type="file"
+        id="t-icon192"
+        accept="image/png"
+      />
+
+      <label class="fld-label">Ícone PWA 512x512</label>
+      <input
+        class="fld"
+        type="file"
+        id="t-icon512"
+        accept="image/png"
+      />
+
+      <label class="fld-label">Ícone Maskable 512x512</label>
+      <input
+        class="fld"
+        type="file"
+        id="t-maskable"
+        accept="image/png"
+      />
+
+      <label class="fld-label">Glifo (opcional)</label>
+      <input
+        class="fld"
+        id="t-glyph"
+        maxlength="2"
+        placeholder="◈"
+      />
+
+      <div class="fld-help">
+        Os ícones serão utilizados para o favicon, instalação do PWA e atalhos do aplicativo.
+      </div>
+
+    </div>
+
+    <div class="painel-card preview-card">
+      <div class="card-titulo">Pré-visualização no app</div>
+
+      <div class="phone-mock">
+
+        <div class="phone-header" id="prev-header">
+
+          <div class="phone-logo" id="prev-logo">
+            <img
+              id="prev-logo-img"
+              src=""
+              alt=""
+              style="display:none;width:100%;height:100%;object-fit:contain;"
+            />
+            <span id="prev-logo-glyph">◈</span>
+          </div>
+
+          <div>
+            <div class="phone-titulo" id="prev-nome">
+              Sua Empresa
+            </div>
+
+            <div class="phone-sub" id="prev-tag">
+              Internet Fibra
+            </div>
+          </div>
+
+        </div>
+
+        <div class="phone-card" id="prev-plano">
+          <div class="phone-plano-label">SEU PLANO</div>
+          <div class="phone-plano-nome">200 Mega</div>
+          <div class="phone-plano-preco">R$ 74,90/mês</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="acoes-fixas">
+    <span class="salvo-em" id="salvo-tema"></span>
+    <button class="btn btn-primary" id="salvar-tema">
+      Salvar tema
+    </button>
+  </div>
+</section>
 
       <!-- ---- TAB: BANNERS ---- -->
       <section class="tab-panel hidden" id="tab-banners">
