@@ -1,7 +1,10 @@
+import { Import } from "lucide-react";
 import { uid } from "./format";
 
+const URL_BASE = import.meta.env.PROD ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL;
+
 const CONFIG = {
-  API_BASE: "http://192.168.18.188:3010/v1",
+  API_BASE: URL_BASE,
   USE_API: true,
 };
 
