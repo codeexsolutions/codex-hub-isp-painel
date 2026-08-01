@@ -10,7 +10,8 @@ export default function TemaTab({ provedor }) {
     tag: "", accent: "#2563EB", accent2: "#7C3AED", glyph: "",
   });
   const [saving, setSaving] = useState(false);
-
+  const [logoPrev, setLogoPrev] = useState('')
+  
   const logoRef = useRef(null);
   const faviconRef = useRef(null);
   const icon192Ref = useRef(null);
@@ -61,6 +62,10 @@ export default function TemaTab({ provedor }) {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+     setLogoPrev(logoRef.current?.files[0]);
+  }, [])
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -148,6 +153,7 @@ export default function TemaTab({ provedor }) {
                 style={{ background: accent }}
               >
                 {glyph}
+              
               </div>
               <div>
                 <div className="text-sm text-text">{provedor?.nome_fantasia || provedor?.empresa || "Sua Empresa"}</div>

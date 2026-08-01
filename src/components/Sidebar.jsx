@@ -20,11 +20,11 @@ export default function Sidebar({ activeTab, onTabChange, providerName, onLogout
     <>
       <div className="flex items-center gap-3 px-5 pt-6 pb-5">
         <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-base">
-          ◈
+         <img src={"/logo.png"} />
         </div>
         <div>
           <div className="text-sm text-text tracking-wide font-display">
-            hub<span className="text-accent">ISP</span>
+            Synk<span className="text-accent">ISP</span>
           </div>
           <div className="text-[10px] text-text-dim tracking-widest uppercase">Painel</div>
         </div>

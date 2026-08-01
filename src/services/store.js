@@ -1,7 +1,7 @@
 import { Import } from "lucide-react";
 import { uid } from "./format";
 
-const URL_BASE = import.meta.env.PROD ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL;
+const URL_BASE = !import.meta.env.PROD ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL;
 
 const CONFIG = {
   API_BASE: URL_BASE,

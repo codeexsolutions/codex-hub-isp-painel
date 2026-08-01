@@ -1,5 +1,5 @@
 {
-  "name": "hub-isp-painel",
+  "name": "isp-core",
   "private": true,
   "version": "0.0.0",
   "type": "module",

@@ -7,6 +7,7 @@ import { useToast } from "../components/Toast";
 export default function LoginPage({ onLogin }) {
   const [mode, setMode] = useState("login");
   const toast = useToast();
+  const logo = "/logo.png";
 
   return (
     <div className="min-h-dvh flex items-center justify-center bg-canvas p-4">
@@ -14,11 +15,11 @@ export default function LoginPage({ onLogin }) {
         {/* Brand */}
         <div className="flex items-center gap-3 mb-8 justify-center">
           <div className="w-11 h-11 rounded-2xl bg-accent/15 flex items-center justify-center text-accent text-xl">
-            ◈
+            <img src={logo} />
           </div>
           <div>
             <div className="text-xl tracking-tight font-display text-text">
-              hub<span className="text-accent">ISP</span>
+              Synk<span className="text-accent">ISP</span>
             </div>
             <div className="text-[10px] text-text-dim tracking-widest uppercase">
               Painel do Provedor
