@@ -174,7 +174,7 @@ function RegisterForm({ onLogin, onGoLogin, toast }) {
           <Select value={form.gerenciador} onChange={set("gerenciador")}>
             <option value="" disabled>Selecione…</option>
             <option value="RECEITANET">RECEITANET</option>
-            <option value="IXCSOFT" disabled>IXCSOFT</option>
+            <option value="IXCSOFT" >IXCSOFT</option>
           </Select>
         </div>
         <div>
