@@ -429,6 +429,13 @@ export const Recompensas = {
   async remover(id) {
     if (CONFIG.USE_API) { await request(`/painel/provedor/pontos/recompensas/${id}`, { method: "DELETE" }); }
   },
+  // concessão manual de pontos (ex.: cliente pagou em dia) — cpf/cnpj + nome + pontos + motivo
+  async concederPontos(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/pontos/conceder", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
 };
 
 export const Beneficios = {
@@ -527,6 +534,13 @@ export const Indicacoes = {
       return extrairData(json) || [];
     }
     return ler(DB_KEYS.indicacoes).filter((i) => i.provedor_id === provedorId);
+  },
+  // marca a indicação como efetivada e credita os pontos padrão pro cliente que indicou
+  async efetivar(id) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/indicacoes/${id}/efetivar`, { method: "PATCH" });
+      return extrairData(json);
+    }
   },
 };
 

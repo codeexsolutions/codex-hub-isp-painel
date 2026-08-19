@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Award, Pencil, Trash2 } from "lucide-react";
+import { Award, Pencil, Trash2, Gift } from "lucide-react";
 import Modal from "../components/Modal";
 import { Label, Input, Select, Textarea } from "../components/Field";
 import { Recompensas } from "../services/store";
@@ -12,9 +12,16 @@ export default function RecompensasTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(initialForm());
+  const [concederOpen, setConcederOpen] = useState(false);
+  const [concederForm, setConcederForm] = useState(initialConcederForm());
+  const [concedendo, setConcedendo] = useState(false);
 
   function initialForm() {
     return { titulo: "", descricao: "", pontos_necessarios: "", ativo: "true" };
+  }
+
+  function initialConcederForm() {
+    return { cliente_cpf_cnpj: "", cliente_nome: "", pontos: "", motivo: "Pagamento em dia" };
   }
 
   const load = useCallback(async () => {
@@ -79,20 +86,57 @@ export default function RecompensasTab() {
   };
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const setConceder = (k) => (e) => setConcederForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const concederPontos = async () => {
+    if (!concederForm.cliente_cpf_cnpj.trim() || !concederForm.cliente_nome.trim()) {
+      toast("Informe o CPF/CNPJ e o nome do cliente"); return;
+    }
+    if (!concederForm.pontos || Number(concederForm.pontos) <= 0) {
+      toast("Informe uma quantidade de pontos válida"); return;
+    }
+    if (!concederForm.motivo.trim()) { toast("Informe o motivo"); return; }
+    setConcedendo(true);
+    try {
+      await Recompensas.concederPontos({
+        cliente_cpf_cnpj: concederForm.cliente_cpf_cnpj.trim(),
+        cliente_nome: concederForm.cliente_nome.trim(),
+        pontos: Number(concederForm.pontos),
+        motivo: concederForm.motivo.trim(),
+      });
+      toast(`${concederForm.pontos} pontos concedidos a ${concederForm.cliente_nome}`);
+      setConcederOpen(false);
+      setConcederForm(initialConcederForm());
+    } catch (err) {
+      toast(err.message || "Erro ao conceder pontos");
+    } finally {
+      setConcedendo(false);
+    }
+  };
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-xs text-text-dim max-w-md">
-          Recompensas que o cliente troca pelos pontos acumulados em compras de benefícios.
+          Recompensas que o cliente troca pelos pontos acumulados em compras de benefícios. Conceda
+          pontos manualmente pra clientes que pagam em dia ou tiveram uma indicação efetivada.
         </p>
-        <button
-          onClick={() => openModal()}
-          className="px-4 py-2 rounded-xl bg-accent text-white text-sm
-            hover:bg-accent-hover transition-colors duration-200 shrink-0"
-        >
-          + Nova recompensa
-        </button>
+        <div className="flex gap-2 shrink-0">
+          <button
+            onClick={() => setConcederOpen(true)}
+            className="px-4 py-2 rounded-xl border border-border text-text-sub text-sm
+              hover:border-accent/40 hover:text-accent transition-colors duration-200"
+          >
+            <Gift size={14} className="inline -mt-0.5 mr-1.5" /> Conceder pontos
+          </button>
+          <button
+            onClick={() => openModal()}
+            className="px-4 py-2 rounded-xl bg-accent text-white text-sm
+              hover:bg-accent-hover transition-colors duration-200"
+          >
+            + Nova recompensa
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -135,6 +179,48 @@ export default function RecompensasTab() {
             </button>
             <button onClick={salvar} className="px-5 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors">
               Salvar recompensa
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={concederOpen} onClose={() => setConcederOpen(false)} title="Conceder pontos">
+        <div className="space-y-4">
+          <p className="text-xs text-text-dim">
+            Use pra premiar clientes por fora de uma compra — ex.: pagamento em dia ou indicação
+            já efetivada manualmente.
+          </p>
+          <div>
+            <Label>CPF ou CNPJ do cliente</Label>
+            <Input value={concederForm.cliente_cpf_cnpj} onChange={setConceder("cliente_cpf_cnpj")} placeholder="000.000.000-00" />
+          </div>
+          <div>
+            <Label>Nome do cliente</Label>
+            <Input value={concederForm.cliente_nome} onChange={setConceder("cliente_nome")} placeholder="Nome completo" />
+          </div>
+          <div>
+            <Label>Pontos</Label>
+            <Input value={concederForm.pontos} onChange={setConceder("pontos")} inputMode="numeric" placeholder="ex.: 20" />
+          </div>
+          <div>
+            <Label>Motivo</Label>
+            <Select value={concederForm.motivo} onChange={setConceder("motivo")}>
+              <option value="Pagamento em dia">Pagamento em dia</option>
+              <option value="Indicação efetivada">Indicação efetivada</option>
+              <option value="Outro">Outro</option>
+            </Select>
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <button onClick={() => setConcederOpen(false)} className="px-4 py-2 rounded-xl text-sm text-text-sub hover:text-text border border-border hover:border-border-2 transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={concederPontos}
+              disabled={concedendo}
+              className="px-5 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors disabled:opacity-50"
+            >
+              {concedendo ? "Concedendo…" : "Conceder pontos"}
             </button>
           </div>
         </div>

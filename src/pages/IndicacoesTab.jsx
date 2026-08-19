@@ -8,6 +8,7 @@ export default function IndicacoesTab({ provedor }) {
   const toast = useToast();
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [efetivandoId, setEfetivandoId] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -26,6 +27,19 @@ export default function IndicacoesTab({ provedor }) {
     return () => clearInterval(interval);
   }, [load]);
 
+  const efetivar = async (indicacao) => {
+    setEfetivandoId(indicacao.id);
+    try {
+      const resultado = await Indicacoes.efetivar(indicacao.id);
+      setLista((atual) => atual.map((i) => (i.id === indicacao.id ? { ...i, status: "efetivada" } : i)));
+      toast(`Indicação efetivada — ${resultado?.extrato?.pontos ?? ""} pontos creditados a ${indicacao.nome_cliente}`);
+    } catch (err) {
+      toast(err.message || "Erro ao efetivar indicação");
+    } finally {
+      setEfetivandoId(null);
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-sm text-text-dim text-center">Carregando…</div>;
   }
@@ -42,7 +56,9 @@ export default function IndicacoesTab({ provedor }) {
   return (
     <div className="p-6 lg:p-8 space-y-4">
       <p className="text-xs text-text-dim">
-        Consulte as indicações realizadas pelos clientes através do aplicativo.
+        Consulte as indicações realizadas pelos clientes através do aplicativo. Marque como
+        efetivada quando o amigo indicado virar cliente de fato — os pontos são creditados
+        automaticamente pra quem indicou.
       </p>
 
       <div className="bg-surface rounded-2xl border border-border overflow-hidden">
@@ -54,10 +70,15 @@ export default function IndicacoesTab({ provedor }) {
                 <th className="px-5 py-3">Indicado</th>
                 <th className="px-5 py-3">Contato</th>
                 <th className="px-5 py-3">Mensagem</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {lista.map((i, idx) => (
+              {lista.map((i, idx) => {
+                const efetivada = i.status === "efetivada";
+                const semCpf = !i.cliente_cpf_cnpj;
+                return (
                 <tr key={i.id || idx} className="border-b border-border/50 last:border-0 hover:bg-surface-2/50 transition-colors">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -87,8 +108,29 @@ export default function IndicacoesTab({ provedor }) {
                       {i.mensagem || "Nenhuma mensagem enviada"}
                     </div>
                   </td>
+                  <td className="px-5 py-3">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                      efetivada ? "text-success border-success/30 bg-success/8" : "text-text-dim border-border bg-surface-2"
+                    }`}>
+                      {efetivada ? "Efetivada" : "Pendente"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {!efetivada && (
+                      <button
+                        onClick={() => efetivar(i)}
+                        disabled={efetivandoId === i.id || semCpf}
+                        title={semCpf ? "Indicação antiga sem CPF/CNPJ — conceda os pontos manualmente na aba Recompensas" : undefined}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/30
+                          hover:bg-accent/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {efetivandoId === i.id ? "Efetivando…" : "Marcar como efetivada"}
+                      </button>
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
