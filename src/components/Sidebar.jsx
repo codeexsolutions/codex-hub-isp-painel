@@ -1,25 +1,35 @@
 import {
-  Building2, Palette, Image, Megaphone, Gift, Star, Bell, LogOut, Menu, X,
+  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X,
 } from "lucide-react";
 import { useState } from "react";
 
-const NAV = [
+const NAV_BASE = [
+  { key: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { key: "provedor", icon: Building2, label: "Provedor" },
   { key: "tema", icon: Palette, label: "Tema" },
   { key: "banners", icon: Image, label: "Banners" },
-  { key: "anuncios", icon: Megaphone, label: "Anúncios" },
+];
+
+const NAV_BENEFICIOS = [
+  { key: "beneficios", icon: Tag, label: "Benefícios" },
+  { key: "recompensas", icon: Award, label: "Recompensas" },
+  { key: "compras", icon: Receipt, label: "Relatórios" },
+];
+
+const NAV_RESTO = [
   { key: "notificacoes", icon: Bell, label: "Notificações" },
   { key: "indicacoes", icon: Gift, label: "Indicações" },
   { key: "avaliacoes", icon: Star, label: "Avaliações" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, providerName, onLogout }) {
+export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const NAV = [...NAV_BASE, ...(temBeneficios ? NAV_BENEFICIOS : []), ...NAV_RESTO];
 
   const nav = (
     <>
       <div className="flex items-center gap-3 px-5 pt-6 pb-5">
-        <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-base">
+        <div className="w-9 h-9 rounded-xl bg-accent-gradient shadow-glow flex items-center justify-center text-white text-base overflow-hidden">
          <img src={"/logo.png"} />
         </div>
         <div>
@@ -37,12 +47,12 @@ export default function Sidebar({ activeTab, onTabChange, providerName, onLogout
             <button
               key={key}
               onClick={() => { onTabChange(key); setMobileOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-200
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200
                 ${active
-                  ? "bg-accent/10 text-accent"
+                  ? "bg-accent/12 text-accent shadow-sm"
                   : "text-text-sub hover:text-text hover:bg-surface-2"}`}
             >
-              <Icon size={17} strokeWidth={1.6} />
+              <Icon size={17} strokeWidth={active ? 2 : 1.6} />
               {label}
             </button>
           );

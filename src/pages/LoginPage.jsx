@@ -14,7 +14,7 @@ export default function LoginPage({ onLogin }) {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-11 h-11 rounded-2xl bg-accent/15 flex items-center justify-center text-accent text-xl">
+          <div className="w-11 h-11 rounded-2xl bg-accent-gradient shadow-glow flex items-center justify-center text-white text-xl overflow-hidden">
             <img src={logo} />
           </div>
           <div>
@@ -27,7 +27,7 @@ export default function LoginPage({ onLogin }) {
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl border border-border p-6 space-y-5">
+        <div className="bg-surface rounded-3xl border border-border p-6 space-y-5 shadow-soft">
           {mode === "login" ? (
             <LoginForm onLogin={onLogin} onGoRegister={() => setMode("register")} />
           ) : (
@@ -100,8 +100,8 @@ function LoginForm({ onLogin, onGoRegister }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 rounded-xl bg-accent text-white text-sm
-          hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+        className="w-full py-2.5 rounded-xl bg-accent-gradient text-white text-sm font-medium
+          hover:brightness-110 transition-all duration-200 disabled:opacity-50 shadow-glow"
       >
         {loading ? "Entrando…" : "Entrar"}
       </button>
@@ -216,8 +216,8 @@ function RegisterForm({ onLogin, onGoLogin, toast }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 rounded-xl bg-accent text-white text-sm
-          hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+        className="w-full py-2.5 rounded-xl bg-accent-gradient text-white text-sm font-medium
+          hover:brightness-110 transition-all duration-200 disabled:opacity-50 shadow-glow"
       >
         {loading ? "Criando…" : "Criar cadastro e acessar o painel"}
       </button>

@@ -95,7 +95,7 @@ export default function TemaTab({ provedor }) {
           </div>
 
           <div>
-            <Label>Logomarca</Label>
+            <Label>Logomarca (600x600, quadrada)</Label>
             <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
               className="w-full text-xs text-text-sub file:mr-3 file:py-2 file:px-4 file:rounded-lg
                 file:border file:border-border file:bg-surface-2 file:text-text-sub file:text-xs

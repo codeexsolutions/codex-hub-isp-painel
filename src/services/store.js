@@ -12,7 +12,7 @@ const DB_KEYS = {
   provedores: "hubisp_provedores",
   temas: "hubisp_temas",
   banners: "hubisp_banners",
-  anuncios: "hubisp_anuncios",
+  beneficios: "hubisp_beneficios",
   indicacoes: "hubisp_indicacoes",
   sessao: "hubisp_sessao",
   token: "hubisp_token",
@@ -245,53 +245,278 @@ export const Banners = {
   },
 };
 
-export const Anuncios = {
+export const Modulos = {
+  // módulos ativos do PRÓPRIO provedor logado (ex.: ["beneficios"])
+  async meus() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/modulos"); return extrairData(json) || []; }
+    return [];
+  },
+};
+
+const ADMIN_TOKEN_KEY = "hubisp_admin_token";
+
+export const Admin = {
+  async login(usuario, senha) {
+    const json = await request("/painel/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ usuario, senha }),
+    });
+    const { token } = extrairData(json);
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    return token;
+  },
+  atual() {
+    return localStorage.getItem(ADMIN_TOKEN_KEY);
+  },
+  sair() {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+  },
+  async _request(path, options = {}) {
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) };
+    const res = await fetch(`${CONFIG.API_BASE}${path}`, { ...options, headers });
+    const texto = await res.text();
+    let json = null;
+    try { json = texto ? JSON.parse(texto) : null; } catch {}
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      throw new Error((json && json.message) || "Sessão de admin expirada.");
+    }
+    if (!res.ok) throw new Error((json && json.message) || texto || `Erro ${res.status}`);
+    return json;
+  },
+  async listarProvedores() {
+    const json = await this._request("/painel/admin/provedores");
+    return extrairData(json) || [];
+  },
+  async definirModulo(codigoProvedor, modulo, ativo) {
+    const json = await this._request(`/painel/admin/provedores/${codigoProvedor}/modulos/${modulo}`, {
+      method: "PATCH",
+      body: JSON.stringify({ ativo }),
+    });
+    return extrairData(json);
+  },
+  async definirStatus(codigoProvedor, status) {
+    const json = await this._request(`/painel/admin/provedores/${codigoProvedor}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+    return extrairData(json);
+  },
+  async obterConfigComissao() {
+    const json = await this._request("/painel/admin/config-comissao");
+    return extrairData(json);
+  },
+  async definirConfigComissao(config) {
+    const json = await this._request("/painel/admin/config-comissao", {
+      method: "PUT",
+      body: JSON.stringify(config),
+    });
+    return extrairData(json);
+  },
+  async obterRelatorioCompras() {
+    const json = await this._request("/painel/admin/compras");
+    return extrairData(json);
+  },
+  async obterConfigPontos() {
+    const json = await this._request("/painel/admin/config-pontos");
+    return extrairData(json);
+  },
+  async definirConfigPontos(config) {
+    const json = await this._request("/painel/admin/config-pontos", {
+      method: "PUT",
+      body: JSON.stringify(config),
+    });
+    return extrairData(json);
+  },
+  async criarParceiro(dados) {
+    const json = await this._request("/painel/admin/parceiros", { method: "POST", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+  async listarParceiros() {
+    const json = await this._request("/painel/admin/parceiros");
+    return extrairData(json) || [];
+  },
+  async definirStatusParceiro(id, ativo) {
+    const json = await this._request(`/painel/admin/parceiros/${id}/status`, { method: "PATCH", body: JSON.stringify({ ativo }) });
+    return extrairData(json);
+  },
+  async definirProvedorParceiro(id, codigoProvedorFk) {
+    const json = await this._request(`/painel/admin/parceiros/${id}/provedor`, { method: "PATCH", body: JSON.stringify({ codigo_provedor_fk: codigoProvedorFk }) });
+    return extrairData(json);
+  },
+  async validarCompra(id) {
+    const json = await this._request(`/painel/admin/compras/${id}/validar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+};
+
+export const Compras = {
+  // relatório de compras/comissão do provedor logado
+  async listar() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/compras"); return extrairData(json) || []; }
+    return [];
+  },
+};
+
+const PARCEIRO_TOKEN_KEY = "hubisp_parceiro_token";
+
+export const Parceiro = {
+  async login(usuario, senha) {
+    const json = await request("/parceiros/login", {
+      method: "POST",
+      body: JSON.stringify({ usuario, senha }),
+    });
+    const { token } = extrairData(json);
+    localStorage.setItem(PARCEIRO_TOKEN_KEY, token);
+    return token;
+  },
+  atual() {
+    return localStorage.getItem(PARCEIRO_TOKEN_KEY);
+  },
+  sair() {
+    localStorage.removeItem(PARCEIRO_TOKEN_KEY);
+  },
+  async _request(path, options = {}) {
+    const token = localStorage.getItem(PARCEIRO_TOKEN_KEY);
+    const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) };
+    const res = await fetch(`${CONFIG.API_BASE}${path}`, { ...options, headers });
+    const texto = await res.text();
+    let json = null;
+    try { json = texto ? JSON.parse(texto) : null; } catch {}
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem(PARCEIRO_TOKEN_KEY);
+      throw new Error((json && json.message) || "Sessão do parceiro expirada.");
+    }
+    if (!res.ok) throw new Error((json && json.message) || texto || `Erro ${res.status}`);
+    return json;
+  },
+  async financeiro() {
+    const json = await this._request("/parceiros/financeiro");
+    return extrairData(json);
+  },
+  async buscarCupom(codigo) {
+    const json = await this._request(`/parceiros/cupom/${encodeURIComponent(codigo)}`);
+    return extrairData(json);
+  },
+  async validarCupom(codigo) {
+    const json = await this._request(`/parceiros/cupom/${encodeURIComponent(codigo)}/validar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async cancelarCupom(codigo) {
+    const json = await this._request(`/parceiros/cupom/${encodeURIComponent(codigo)}/cancelar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+};
+
+export const Recompensas = {
+  async listar() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/pontos/recompensas"); return extrairData(json) || []; }
+    return [];
+  },
+  async criar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/pontos/recompensas", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async atualizar(id, dados) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/pontos/recompensas/${id}`, { method: "PATCH", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async remover(id) {
+    if (CONFIG.USE_API) { await request(`/painel/provedor/pontos/recompensas/${id}`, { method: "DELETE" }); }
+  },
+};
+
+export const Beneficios = {
   async listar(provedorId) {
-    if (CONFIG.USE_API) { const json = await request("/painel/provedor/anuncios"); return extrairData(json) || []; }
-    return ler(DB_KEYS.anuncios).filter((p) => p.provedor_id === provedorId);
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/beneficios"); return extrairData(json) || []; }
+    return ler(DB_KEYS.beneficios).filter((b) => b.provedor_id === provedorId);
   },
   async criar(provedorId, dados) {
     if (CONFIG.USE_API) {
       const form = new FormData();
-      form.append("tipo", dados.tipo);
+      form.append("categoria", dados.categoria);
+      form.append("parceiro", dados.parceiro);
       form.append("titulo", dados.titulo);
       form.append("subtitulo", dados.subtitulo || "");
       form.append("descricao", dados.descricao || "");
       form.append("link", dados.link || "");
       form.append("ativo", String(dados.ativo));
+      form.append("valor", dados.valor || "");
+      form.append("parceiro_id_fk", dados.parceiro_id_fk || "");
       if (dados.imagemFile) form.append("imagem", dados.imagemFile);
-      const json = await request("/painel/provedor/anuncios", { method: "POST", body: form });
+      const json = await request("/painel/provedor/beneficios", { method: "POST", body: form });
       return extrairData(json);
     }
-    const lista = ler(DB_KEYS.anuncios);
+    const lista = ler(DB_KEYS.beneficios);
     const novo = { id: uid(), provedor_id: provedorId, ...dados };
     lista.push(novo);
-    gravar(DB_KEYS.anuncios, lista);
+    gravar(DB_KEYS.beneficios, lista);
     return novo;
   },
   async atualizar(id, dados) {
     if (CONFIG.USE_API) {
       const form = new FormData();
-      form.append("tipo", dados.tipo);
+      form.append("categoria", dados.categoria);
+      form.append("parceiro", dados.parceiro);
       form.append("titulo", dados.titulo);
       form.append("subtitulo", dados.subtitulo || "");
       form.append("descricao", dados.descricao || "");
       form.append("link", dados.link || "");
       form.append("ativo", String(dados.ativo));
+      form.append("valor", dados.valor || "");
+      form.append("parceiro_id_fk", dados.parceiro_id_fk || "");
       if (dados.imagemFile) form.append("imagem", dados.imagemFile);
-      const json = await request(`/painel/provedor/anuncios/${id}`, { method: "PATCH", body: form });
+      const json = await request(`/painel/provedor/beneficios/${id}`, { method: "PATCH", body: form });
       return extrairData(json);
     }
-    const lista = ler(DB_KEYS.anuncios);
-    const i = lista.findIndex((p) => p.id === id);
-    if (i === -1) throw new Error("Anúncio não encontrado.");
+    const lista = ler(DB_KEYS.beneficios);
+    const i = lista.findIndex((b) => b.id === id);
+    if (i === -1) throw new Error("Benefício não encontrado.");
     lista[i] = { ...lista[i], ...dados };
-    gravar(DB_KEYS.anuncios, lista);
+    gravar(DB_KEYS.beneficios, lista);
     return lista[i];
   },
   async remover(id) {
-    if (CONFIG.USE_API) { await request(`/painel/provedor/anuncios/${id}`, { method: "DELETE" }); return; }
-    gravar(DB_KEYS.anuncios, ler(DB_KEYS.anuncios).filter((p) => p.id !== id));
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/beneficios/${id}`, { method: "DELETE" });
+      return extrairData(json);
+    }
+    gravar(DB_KEYS.beneficios, ler(DB_KEYS.beneficios).filter((b) => b.id !== id));
+    return { removido: true };
+  },
+  // lista pública de parceiros com portal cadastrado (pro select de vínculo) — só os do provedor + nacionais
+  async listarParceirosDisponiveis(codigoProvedor) {
+    const json = await request(`/provedores/parceiros/${codigoProvedor}`);
+    return extrairData(json) || [];
+  },
+};
+
+export const Metricas = {
+  async obter(provedorId) {
+    if (CONFIG.USE_API) {
+      try {
+        const json = await request("/painel/provedor/metricas");
+        return extrairData(json);
+      } catch {
+        return this._mock();
+      }
+    }
+    return this._mock();
+  },
+  _mock() {
+    return {
+      clientesConectados: 0,
+      usuariosAtivos: 0,
+      compras: 0,
+      vendasGeradas: 0,
+      comissao: 0,
+      beneficiosUtilizados: 0,
+    };
   },
 };
 

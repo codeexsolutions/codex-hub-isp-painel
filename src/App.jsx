@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sessao } from "./services/store";
+import { Sessao, Modulos } from "./services/store";
 import { ToastProvider } from "./components/Toast";
 import LoginPage from "./pages/LoginPage";
 import Sidebar from "./components/Sidebar";
@@ -7,15 +7,31 @@ import Topbar from "./components/Topbar";
 import ProvedorTab from "./pages/ProvedorTab";
 import TemaTab from "./pages/TemaTab";
 import BannersTab from "./pages/BannersTab";
-import AnunciosTab from "./pages/AnunciosTab";
+import BeneficiosTab from "./pages/BeneficiosTab";
+import RecompensasTab from "./pages/RecompensasTab";
+import ComprasTab from "./pages/ComprasTab";
+import DashboardTab from "./pages/DashboardTab";
 import NotificacoesTab from "./pages/NotificacoesTab";
 import IndicacoesTab from "./pages/IndicacoesTab";
 import AvaliacoesTab from "./pages/AvaliacoesTab";
+import AdminApp from "./AdminApp";
+import ParceiroApp from "./ParceiroApp";
 
 export default function App() {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+    return <AdminApp />;
+  }
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/parceiro")) {
+    return <ParceiroApp />;
+  }
+  return <ProviderApp />;
+}
+
+function ProviderApp() {
   const [provedor, setProvedor] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("provedor");
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [modulos, setModulos] = useState([]);
 
   useEffect(() => {
     Sessao.atual().then((p) => {
@@ -24,15 +40,21 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!provedor) return;
+    Modulos.meus().then(setModulos).catch(() => setModulos([]));
+  }, [provedor]);
+
   const handleLogin = (p) => {
     setProvedor(p);
-    setActiveTab("provedor");
+    setActiveTab("dashboard");
   };
 
   const handleLogout = () => {
     Sessao.sair();
     setProvedor(null);
-    setActiveTab("provedor");
+    setModulos([]);
+    setActiveTab("dashboard");
   };
 
   const handleUpdateProvedor = (updated) => {
@@ -55,16 +77,24 @@ export default function App() {
     );
   }
 
+  const temBeneficios = modulos.includes("beneficios");
+
   const renderTab = () => {
     switch (activeTab) {
+      case "dashboard":
+        return <DashboardTab provedor={provedor} />;
       case "provedor":
         return <ProvedorTab provedor={provedor} onUpdate={handleUpdateProvedor} />;
       case "tema":
         return <TemaTab provedor={provedor} />;
       case "banners":
         return <BannersTab provedor={provedor} />;
-      case "anuncios":
-        return <AnunciosTab provedor={provedor} />;
+      case "beneficios":
+        return temBeneficios ? <BeneficiosTab provedor={provedor} /> : null;
+      case "recompensas":
+        return temBeneficios ? <RecompensasTab /> : null;
+      case "compras":
+        return temBeneficios ? <ComprasTab /> : null;
       case "notificacoes":
         return <NotificacoesTab provedor={provedor} />;
       case "indicacoes":
@@ -84,6 +114,7 @@ export default function App() {
           onTabChange={setActiveTab}
           providerName={provedor.nome_fantasia || provedor.empresa}
           onLogout={handleLogout}
+          temBeneficios={temBeneficios}
         />
 
         <main className="flex-1 flex flex-col min-w-0">
