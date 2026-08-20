@@ -345,6 +345,14 @@ export const Admin = {
     const json = await this._request(`/painel/admin/parceiros/${id}/provedor`, { method: "PATCH", body: JSON.stringify({ codigo_provedor_fk: codigoProvedorFk }) });
     return extrairData(json);
   },
+  async definirLocalizacaoParceiro(id, cidade, uf) {
+    const json = await this._request(`/painel/admin/parceiros/${id}/localizacao`, { method: "PATCH", body: JSON.stringify({ cidade, uf }) });
+    return extrairData(json);
+  },
+  async definirContatoParceiro(id, endereco, contato) {
+    const json = await this._request(`/painel/admin/parceiros/${id}/contato`, { method: "PATCH", body: JSON.stringify({ endereco, contato }) });
+    return extrairData(json);
+  },
   async validarCompra(id) {
     const json = await this._request(`/painel/admin/compras/${id}/validar`, { method: "PATCH" });
     return extrairData(json);
@@ -379,7 +387,10 @@ export const Parceiro = {
   },
   async _request(path, options = {}) {
     const token = localStorage.getItem(PARCEIRO_TOKEN_KEY);
-    const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) };
+    const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) };
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
     const res = await fetch(`${CONFIG.API_BASE}${path}`, { ...options, headers });
     const texto = await res.text();
     let json = null;
@@ -407,7 +418,41 @@ export const Parceiro = {
     const json = await this._request(`/parceiros/cupom/${encodeURIComponent(codigo)}/cancelar`, { method: "PATCH" });
     return extrairData(json);
   },
+  // OFERTAS — o parceiro cria/gerencia; o provedor só ativa (ver Beneficios.catalogo/ativar)
+  async listarOfertas() {
+    const json = await this._request("/parceiros/ofertas");
+    return extrairData(json) || [];
+  },
+  async criarOferta(dados) {
+    const json = await this._request("/parceiros/ofertas", { method: "POST", body: montarFormDataOferta(dados) });
+    return extrairData(json);
+  },
+  async atualizarOferta(id, dados) {
+    const json = await this._request(`/parceiros/ofertas/${id}`, { method: "PATCH", body: montarFormDataOferta(dados) });
+    return extrairData(json);
+  },
+  async removerOferta(id) {
+    const json = await this._request(`/parceiros/ofertas/${id}`, { method: "DELETE" });
+    return extrairData(json);
+  },
 };
+
+function montarFormDataOferta(dados) {
+  const form = new FormData();
+  form.append("categoria", dados.categoria);
+  form.append("parceiro", dados.parceiro);
+  form.append("titulo", dados.titulo);
+  form.append("subtitulo", dados.subtitulo || "");
+  form.append("descricao", dados.descricao || "");
+  form.append("link", dados.link || "");
+  form.append("ativo", String(dados.ativo));
+  form.append("valor", dados.valor || "");
+  form.append("valor_original", dados.valor_original || "");
+  form.append("validade_fim", dados.validade_fim || "");
+  form.append("regras", dados.regras || "");
+  if (dados.imagemFile) form.append("imagem", dados.imagemFile);
+  return form;
+}
 
 export const Recompensas = {
   async listar() {
@@ -438,68 +483,19 @@ export const Recompensas = {
   },
 };
 
+// Ofertas são criadas pelo parceiro (ver objeto Parceiro) — o provedor só vê o
+// catálogo de todas as ofertas disponíveis e ativa/desativa pra própria base.
 export const Beneficios = {
-  async listar(provedorId) {
-    if (CONFIG.USE_API) { const json = await request("/painel/provedor/beneficios"); return extrairData(json) || []; }
-    return ler(DB_KEYS.beneficios).filter((b) => b.provedor_id === provedorId);
+  async catalogo() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/ofertas/catalogo"); return extrairData(json) || []; }
+    return ler(DB_KEYS.beneficios);
   },
-  async criar(provedorId, dados) {
+  async ativar(id, ativo) {
     if (CONFIG.USE_API) {
-      const form = new FormData();
-      form.append("categoria", dados.categoria);
-      form.append("parceiro", dados.parceiro);
-      form.append("titulo", dados.titulo);
-      form.append("subtitulo", dados.subtitulo || "");
-      form.append("descricao", dados.descricao || "");
-      form.append("link", dados.link || "");
-      form.append("ativo", String(dados.ativo));
-      form.append("valor", dados.valor || "");
-      form.append("parceiro_id_fk", dados.parceiro_id_fk || "");
-      if (dados.imagemFile) form.append("imagem", dados.imagemFile);
-      const json = await request("/painel/provedor/beneficios", { method: "POST", body: form });
+      const json = await request(`/painel/provedor/ofertas/${id}/ativar`, { method: "PATCH", body: JSON.stringify({ ativo }) });
       return extrairData(json);
     }
-    const lista = ler(DB_KEYS.beneficios);
-    const novo = { id: uid(), provedor_id: provedorId, ...dados };
-    lista.push(novo);
-    gravar(DB_KEYS.beneficios, lista);
-    return novo;
-  },
-  async atualizar(id, dados) {
-    if (CONFIG.USE_API) {
-      const form = new FormData();
-      form.append("categoria", dados.categoria);
-      form.append("parceiro", dados.parceiro);
-      form.append("titulo", dados.titulo);
-      form.append("subtitulo", dados.subtitulo || "");
-      form.append("descricao", dados.descricao || "");
-      form.append("link", dados.link || "");
-      form.append("ativo", String(dados.ativo));
-      form.append("valor", dados.valor || "");
-      form.append("parceiro_id_fk", dados.parceiro_id_fk || "");
-      if (dados.imagemFile) form.append("imagem", dados.imagemFile);
-      const json = await request(`/painel/provedor/beneficios/${id}`, { method: "PATCH", body: form });
-      return extrairData(json);
-    }
-    const lista = ler(DB_KEYS.beneficios);
-    const i = lista.findIndex((b) => b.id === id);
-    if (i === -1) throw new Error("Benefício não encontrado.");
-    lista[i] = { ...lista[i], ...dados };
-    gravar(DB_KEYS.beneficios, lista);
-    return lista[i];
-  },
-  async remover(id) {
-    if (CONFIG.USE_API) {
-      const json = await request(`/painel/provedor/beneficios/${id}`, { method: "DELETE" });
-      return extrairData(json);
-    }
-    gravar(DB_KEYS.beneficios, ler(DB_KEYS.beneficios).filter((b) => b.id !== id));
-    return { removido: true };
-  },
-  // lista pública de parceiros com portal cadastrado (pro select de vínculo) — só os do provedor + nacionais
-  async listarParceirosDisponiveis(codigoProvedor) {
-    const json = await request(`/provedores/parceiros/${codigoProvedor}`);
-    return extrairData(json) || [];
+    return { id, ativo };
   },
 };
 

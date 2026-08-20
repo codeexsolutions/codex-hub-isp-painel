@@ -5,6 +5,7 @@ import { useToast } from "../../components/Toast";
 
 const MODULOS = [
   { key: "beneficios", label: "Benefícios" },
+  { key: "recompensas", label: "Recompensas" },
   { key: "desbloqueio_confianca", label: "Desbloqueio de confiança" },
 ];
 

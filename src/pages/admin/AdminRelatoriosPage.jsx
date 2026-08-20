@@ -1,9 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Receipt } from "lucide-react";
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 import { Admin } from "../../services/store";
 import { formataData } from "../../services/format";
 import { useToast } from "../../components/Toast";
 import StatusBadge from "../../components/StatusBadge";
+import { COR_ACCENT, COR_BORDER, COR_TEXT_SUB, CORES_STATUS, vendasPorDia, distribuicaoStatus } from "../../utils/relatoriosCharts";
 
 const brl = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -27,6 +32,9 @@ export default function AdminRelatoriosPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const dadosVendas = useMemo(() => vendasPorDia(compras), [compras]);
+  const dadosStatus = useMemo(() => distribuicaoStatus(compras), [compras]);
 
   const validar = async (compra) => {
     setValidandoId(compra.id);
@@ -60,6 +68,58 @@ export default function AdminRelatoriosPage() {
         <Card label="Synk" value={brl(resumo.totalSynk)} />
         <Card label="Provedores" value={brl(resumo.totalProvedor)} />
       </div>
+
+      {compras.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-surface rounded-2xl border border-border p-5 shadow-soft">
+            <p className="text-sm text-text font-display mb-4">Vendas validadas (últimos 14 dias)</p>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dadosVendas} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="gVendasAdmin" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COR_ACCENT} stopOpacity={0.4} />
+                      <stop offset="100%" stopColor={COR_ACCENT} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={COR_BORDER} vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: COR_TEXT_SUB }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: COR_TEXT_SUB }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => brl(v)} />
+                  <Tooltip
+                    contentStyle={{ background: "#0e1529", border: `1px solid ${COR_BORDER}`, borderRadius: 12, fontSize: 12, color: "#e2e8f0" }}
+                    labelStyle={{ color: "#e2e8f0", fontWeight: 700 }}
+                    formatter={(v) => [brl(v), "Vendido"]}
+                  />
+                  <Area type="monotone" dataKey="valor" stroke={COR_ACCENT} strokeWidth={2.5} fill="url(#gVendasAdmin)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl border border-border p-5 shadow-soft">
+            <p className="text-sm text-text font-display mb-4">Compras por status</p>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={dadosStatus} dataKey="qtd" nameKey="label" innerRadius={45} outerRadius={70} paddingAngle={3}>
+                    {dadosStatus.map((d) => (
+                      <Cell key={d.status} fill={CORES_STATUS[d.status]} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: "#0e1529", border: `1px solid ${COR_BORDER}`, borderRadius: 12, fontSize: 12, color: "#e2e8f0" }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={30}
+                    formatter={(value) => <span style={{ color: COR_TEXT_SUB, fontSize: 12 }}>{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!compras.length ? (
         <div className="text-center py-16">

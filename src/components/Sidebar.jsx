@@ -11,9 +11,9 @@ const NAV_BASE = [
 ];
 
 const NAV_BENEFICIOS = [
-  { key: "beneficios", icon: Tag, label: "Benefícios" },
-  { key: "recompensas", icon: Award, label: "Recompensas" },
-  { key: "compras", icon: Receipt, label: "Relatórios" },
+  { key: "beneficios", icon: Tag, label: "Benefícios", requer: "beneficios" },
+  { key: "recompensas", icon: Award, label: "Recompensas", requer: "recompensas" },
+  { key: "compras", icon: Receipt, label: "Relatórios", requer: "beneficios" },
 ];
 
 const NAV_RESTO = [
@@ -22,9 +22,14 @@ const NAV_RESTO = [
   { key: "avaliacoes", icon: Star, label: "Avaliações" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios }) {
+export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios, temRecompensas }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const NAV = [...NAV_BASE, ...(temBeneficios ? NAV_BENEFICIOS : []), ...NAV_RESTO];
+  const modulosAtivos = { beneficios: temBeneficios, recompensas: temRecompensas };
+  const NAV = [
+    ...NAV_BASE,
+    ...NAV_BENEFICIOS.filter((item) => modulosAtivos[item.requer]),
+    ...NAV_RESTO,
+  ];
 
   const nav = (
     <>

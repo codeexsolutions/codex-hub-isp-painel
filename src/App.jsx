@@ -78,6 +78,7 @@ function ProviderApp() {
   }
 
   const temBeneficios = modulos.includes("beneficios");
+  const temRecompensas = modulos.includes("recompensas");
 
   const renderTab = () => {
     switch (activeTab) {
@@ -92,7 +93,7 @@ function ProviderApp() {
       case "beneficios":
         return temBeneficios ? <BeneficiosTab provedor={provedor} /> : null;
       case "recompensas":
-        return temBeneficios ? <RecompensasTab /> : null;
+        return temRecompensas ? <RecompensasTab /> : null;
       case "compras":
         return temBeneficios ? <ComprasTab /> : null;
       case "notificacoes":
@@ -115,6 +116,7 @@ function ProviderApp() {
           providerName={provedor.nome_fantasia || provedor.empresa}
           onLogout={handleLogout}
           temBeneficios={temBeneficios}
+          temRecompensas={temRecompensas}
         />
 
         <main className="flex-1 flex flex-col min-w-0">
