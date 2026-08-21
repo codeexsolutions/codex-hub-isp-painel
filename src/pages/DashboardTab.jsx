@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Users, UserCheck, ShoppingBag, TrendingUp, Wallet, Gift } from "lucide-react";
-import { Metricas } from "../services/store";
+import { Users, UserCheck, ShoppingBag, TrendingUp, Wallet, Gift, AlertTriangle } from "lucide-react";
+import { Metricas, Faturamento } from "../services/store";
+import { alertaFatura } from "../utils/faturamento";
 
 const CARDS = [
   { key: "clientesConectados", label: "Clientes conectados", icon: Users, formato: "numero" },
@@ -17,6 +18,7 @@ const numero = (v) => Number(v || 0).toLocaleString("pt-BR");
 export default function DashboardTab({ provedor }) {
   const [metricas, setMetricas] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [alerta, setAlerta] = useState(null);
 
   useEffect(() => {
     Metricas.obter(provedor.id)
@@ -24,8 +26,27 @@ export default function DashboardTab({ provedor }) {
       .finally(() => setLoading(false));
   }, [provedor.id]);
 
+  useEffect(() => {
+    Faturamento.obter()
+      .then((dados) => setAlerta(alertaFatura(dados?.faturas?.find((f) => f.status === "pendente"))))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      {alerta && (
+        <div className={`rounded-2xl border p-4 flex items-center gap-3 ${
+          alerta.tipo === "atrasado" ? "border-danger/30 bg-danger/8" : "border-warning/30 bg-warning/8"
+        }`}>
+          <AlertTriangle size={18} className={alerta.tipo === "atrasado" ? "text-danger" : "text-warning"} />
+          <p className={`text-sm ${alerta.tipo === "atrasado" ? "text-danger" : "text-warning"}`}>
+            {alerta.tipo === "atrasado" && `Sua mensalidade Synk está atrasada há ${alerta.dias} dia${alerta.dias > 1 ? "s" : ""} — acesse Faturamento pra regularizar.`}
+            {alerta.tipo === "hoje" && "Sua mensalidade Synk vence hoje — acesse Faturamento pra pagar."}
+            {alerta.tipo === "proximo" && `Sua mensalidade Synk vence em ${alerta.dias} dia${alerta.dias > 1 ? "s" : ""}.`}
+          </p>
+        </div>
+      )}
+
       <p className="text-xs text-text-dim max-w-lg">
         Visão geral do impacto comercial do Synk na sua base de clientes.
       </p>

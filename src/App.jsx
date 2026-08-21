@@ -10,6 +10,7 @@ import BannersTab from "./pages/BannersTab";
 import BeneficiosTab from "./pages/BeneficiosTab";
 import RecompensasTab from "./pages/RecompensasTab";
 import ComprasTab from "./pages/ComprasTab";
+import FaturamentoTab from "./pages/FaturamentoTab";
 import DashboardTab from "./pages/DashboardTab";
 import NotificacoesTab from "./pages/NotificacoesTab";
 import IndicacoesTab from "./pages/IndicacoesTab";
@@ -96,6 +97,8 @@ function ProviderApp() {
         return temRecompensas ? <RecompensasTab /> : null;
       case "compras":
         return temBeneficios ? <ComprasTab /> : null;
+      case "faturamento":
+        return <FaturamentoTab />;
       case "notificacoes":
         return <NotificacoesTab provedor={provedor} />;
       case "indicacoes":

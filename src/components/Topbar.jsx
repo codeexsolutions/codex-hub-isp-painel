@@ -5,6 +5,7 @@ const TITULOS = {
   banners: ["Banners", "Carrossel de ofertas na tela inicial do app"],
   beneficios: ["Benefícios", "Ofertas e vantagens exclusivas para seus clientes"],
   compras: ["Relatórios", "Compras, cupons e comissão gerados pelos benefícios"],
+  faturamento: ["Faturamento", "Sua assinatura e faturas com a Synk"],
   recompensas: ["Recompensas", "O que o cliente pode trocar pelos pontos acumulados"],
   notificacoes: ["Notificações Push", "Envie notificações para os assinantes do app"],
   indicacoes: ["Indicações", "Clientes que indicaram novos assinantes pelo aplicativo"],

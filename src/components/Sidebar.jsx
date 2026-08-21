@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X,
+  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X, CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -17,6 +17,7 @@ const NAV_BENEFICIOS = [
 ];
 
 const NAV_RESTO = [
+  { key: "faturamento", icon: CreditCard, label: "Faturamento" },
   { key: "notificacoes", icon: Bell, label: "Notificações" },
   { key: "indicacoes", icon: Gift, label: "Indicações" },
   { key: "avaliacoes", icon: Star, label: "Avaliações" },

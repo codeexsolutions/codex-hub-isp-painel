@@ -6,6 +6,7 @@ const ABAS = [
   { key: "pontos", label: "Pontos" },
   { key: "relatorios", label: "Relatórios" },
   { key: "parceiros", label: "Parceiros" },
+  { key: "faturamento", label: "Faturamento" },
 ];
 
 export default function AdminShell({ aba, onAbaChange, onLogout, children }) {

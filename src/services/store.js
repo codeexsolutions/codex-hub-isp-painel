@@ -357,6 +357,42 @@ export const Admin = {
     const json = await this._request(`/painel/admin/compras/${id}/validar`, { method: "PATCH" });
     return extrairData(json);
   },
+  // FATURAMENTO SYNK (mensalidade que o provedor paga pra Synk)
+  async listarFaturamento() {
+    const json = await this._request("/painel/admin/faturamento");
+    return extrairData(json) || [];
+  },
+  async configurarAssinatura(codigoProvedor, dados) {
+    const json = await this._request(`/painel/admin/faturamento/${codigoProvedor}/assinatura`, { method: "POST", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+  async marcarFaturaPaga(id) {
+    const json = await this._request(`/painel/admin/faturas/${id}/pagar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async marcarFaturaCancelada(id) {
+    const json = await this._request(`/painel/admin/faturas/${id}/cancelar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async obterRecibo(id) {
+    const json = await this._request(`/painel/admin/faturas/${id}/recibo`);
+    return extrairData(json);
+  },
+  async obterConfigPix() {
+    const json = await this._request("/painel/admin/config-pix");
+    return extrairData(json);
+  },
+  async definirConfigPix(dados) {
+    const json = await this._request("/painel/admin/config-pix", { method: "PUT", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+};
+
+export const Faturamento = {
+  async obter() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/faturamento"); return extrairData(json); }
+    return { assinatura: null, faturas: [], modulosAtivos: [], pixCopiaCola: null };
+  },
 };
 
 export const Compras = {
