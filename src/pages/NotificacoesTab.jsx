@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Bell, Send, Clock, Users, AlertCircle, CheckCircle2, Search, UserCheck, BellOff } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Bell, Send, Clock, Users, AlertCircle, CheckCircle2, Search, UserCheck, BellOff, X } from "lucide-react";
 import { Label, Input, Textarea, Select } from "../components/Field";
 import { Notificacoes } from "../services/store";
 import { formataData, formatarTelefone } from "../services/format";
@@ -273,6 +273,7 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
   });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [selecionados, setSelecionados] = useState([]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -281,6 +282,7 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
     if (!form.mensagem.trim()) { toast("Informe a mensagem da notificação"); return; }
     if (form.titulo.length > 65) { toast("O título deve ter no máximo 65 caracteres"); return; }
     if (form.mensagem.length > 240) { toast("A mensagem deve ter no máximo 240 caracteres"); return; }
+    if (form.destino === "selecionados" && selecionados.length === 0) { toast("Selecione ao menos um cliente"); return; }
 
     setSending(true);
     try {
@@ -289,10 +291,16 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
         body: form.mensagem.trim(),
         destino: form.destino,
         data: form.link.trim() || null,
+        ...(form.destino === "selecionados" ? { cpfs: selecionados } : {}),
       });
-      toast("Notificação enviada");
+      toast(
+        form.destino === "selecionados"
+          ? `Notificação enviada para ${selecionados.length} cliente${selecionados.length > 1 ? "s" : ""}`
+          : "Notificação enviada"
+      );
       setSent(true);
       setForm({ titulo: "", mensagem: "", destino: "todos", link: "" });
+      setSelecionados([]);
       onSent();
       setTimeout(() => setSent(false), 3000);
     } catch (err) {
@@ -310,12 +318,15 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
 
         <div>
           <Label>Destinatários</Label>
-          <Select value={form.destino} onChange={set("destino")}>
+          <Select value={form.destino} onChange={(e) => { set("destino")(e); if (e.target.value !== "selecionados") setSelecionados([]); }}>
             <option value="todos">Todos os assinantes</option>
-           {/*  <option value="ativos">Apenas clientes ativos</option>
-            <option value="inadimplentes">Apenas inadimplentes</option> */}
+            <option value="selecionados">Clientes selecionados</option>
           </Select>
         </div>
+
+        {form.destino === "selecionados" && (
+          <SeletorClientes selecionados={selecionados} onChange={setSelecionados} toast={toast} />
+        )}
 
         <div>
           <Label>Título</Label>
@@ -382,8 +393,10 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
         <div className="bg-warning/5 border border-warning/15 rounded-xl p-3 flex gap-2.5">
           <AlertCircle size={16} className="text-warning shrink-0 mt-0.5" />
           <p className="text-[11px] text-text-sub leading-relaxed">
-            A notificação será enviada para todos os dispositivos com o app instalado e notificações ativadas.
-            Limite recomendado: no máximo 3 notificações por dia.
+            {form.destino === "todos"
+              ? "A notificação será enviada para todos os dispositivos com o app instalado e notificações ativadas."
+              : "A notificação será enviada apenas para os clientes selecionados abaixo."}
+            {" "}Limite recomendado: no máximo 3 notificações por dia.
           </p>
         </div>
       </div>
@@ -422,7 +435,7 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
               <span className="text-[11px] text-text-dim">Destinatários</span>
             </div>
             <p className="text-lg text-text font-display">
-              {form.destino === "todos" ? "Todos" : form.destino === "ativos" ? "Ativos" : "Inadimplentes"}
+              {form.destino === "todos" ? "Todos" : `${selecionados.length} selecionado${selecionados.length !== 1 ? "s" : ""}`}
             </p>
           </div>
           <div className="bg-surface rounded-2xl border border-border p-4">
@@ -435,6 +448,108 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
               <span className="text-xs text-text-dim"> / 305</span>
             </p>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+ *  SELETOR DE CLIENTES (envio para selecionados)
+ * ============================================================*/
+function SeletorClientes({ selecionados, onChange, toast }) {
+  const [assinantes, setAssinantes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+
+  useEffect(() => {
+    Notificacoes.buscarTodosAssinantes()
+      .then((lista) => {
+        const cpfsUnicos = [...new Map(lista.map((a) => [a.cpf, a])).values()];
+        setAssinantes(cpfsUnicos);
+      })
+      .catch((err) => toast(err.message || "Erro ao carregar clientes"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtrados = useMemo(() => {
+    if (!busca) return assinantes;
+    const termo = busca.replace(/\D/g, "") || busca.toLowerCase();
+    return assinantes.filter((a) => (a.cpf || "").replace(/\D/g, "").includes(termo) || (a.cpf || "").toLowerCase().includes(busca.toLowerCase()));
+  }, [assinantes, busca]);
+
+  const alternar = (cpf) => {
+    onChange(selecionados.includes(cpf) ? selecionados.filter((c) => c !== cpf) : [...selecionados, cpf]);
+  };
+
+  const selecionarTodosFiltrados = () => {
+    const cpfsFiltrados = filtrados.map((a) => a.cpf);
+    onChange([...new Set([...selecionados, ...cpfsFiltrados])]);
+  };
+
+  const limpar = () => onChange([]);
+
+  return (
+    <div>
+      <Label>Clientes ({selecionados.length} selecionado{selecionados.length !== 1 ? "s" : ""})</Label>
+
+      {selecionados.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {selecionados.slice(0, 8).map((cpf) => (
+            <span key={cpf} className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-accent/10 border border-accent/25 text-accent">
+              {cpf}
+              <button type="button" onClick={() => alternar(cpf)} className="hover:text-danger">
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+          {selecionados.length > 8 && (
+            <span className="text-[10px] px-2 py-1 text-text-dim">+{selecionados.length - 8}</span>
+          )}
+        </div>
+      )}
+
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="flex items-center gap-2 p-2 border-b border-border bg-surface-2">
+          <Search size={13} className="text-text-dim shrink-0" />
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por CPF/CNPJ…"
+            className="flex-1 bg-transparent text-xs text-text placeholder:text-text-dim outline-none"
+          />
+          {filtrados.length > 0 && (
+            <button type="button" onClick={selecionarTodosFiltrados} className="text-[10px] text-accent shrink-0 hover:underline">
+              Selecionar todos
+            </button>
+          )}
+          {selecionados.length > 0 && (
+            <button type="button" onClick={limpar} className="text-[10px] text-text-dim shrink-0 hover:underline">
+              Limpar
+            </button>
+          )}
+        </div>
+
+        <div className="max-h-56 overflow-y-auto">
+          {loading ? (
+            <div className="text-xs text-text-dim text-center py-6">Carregando…</div>
+          ) : !filtrados.length ? (
+            <div className="text-xs text-text-dim text-center py-6">Nenhum cliente com notificação ativa.</div>
+          ) : (
+            filtrados.map((a) => {
+              const marcado = selecionados.includes(a.cpf);
+              return (
+                <label
+                  key={a.cpf}
+                  className={`flex items-center gap-2.5 px-3 py-2 text-xs cursor-pointer border-b border-border/50 last:border-0
+                    ${marcado ? "bg-accent/5" : "hover:bg-surface-2/50"}`}
+                >
+                  <input type="checkbox" checked={marcado} onChange={() => alternar(a.cpf)} className="accent-[var(--accent)]" />
+                  <span className="text-text-sub">{a.cpf}</span>
+                </label>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
