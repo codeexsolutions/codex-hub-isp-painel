@@ -377,6 +377,18 @@ export const Admin = {
     });
     return extrairData(json);
   },
+  async listarFaturasComissao() {
+    const json = await this._request("/painel/admin/comissao/faturamento");
+    return extrairData(json) || [];
+  },
+  async marcarFaturaComissaoPaga(id) {
+    const json = await this._request(`/painel/admin/comissao/faturas/${id}/pagar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async marcarFaturaComissaoCancelada(id) {
+    const json = await this._request(`/painel/admin/comissao/faturas/${id}/cancelar`, { method: "PATCH" });
+    return extrairData(json);
+  },
   async obterRelatorioCompras() {
     const json = await this._request("/painel/admin/compras");
     return extrairData(json);
@@ -519,6 +531,10 @@ export const Parceiro = {
   },
   async financeiro() {
     const json = await this._request("/parceiros/financeiro");
+    return extrairData(json);
+  },
+  async faturamentoComissao() {
+    const json = await this._request("/parceiros/comissao/faturamento");
     return extrairData(json);
   },
   async buscarCupom(codigo) {
