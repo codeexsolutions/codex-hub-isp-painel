@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { CreditCard, CheckCircle2, XCircle, Printer, Settings } from "lucide-react";
 import Modal from "../../components/Modal";
-import { Label, Input } from "../../components/Field";
+import { Label, Input, Select } from "../../components/Field";
 import { Admin } from "../../services/store";
 import { useToast } from "../../components/Toast";
 import { brl, dataBR, statusFatura, LABEL_STATUS_FATURA, corStatusFatura } from "../../utils/faturamento";
@@ -16,16 +16,18 @@ export default function AdminFaturamentoPage() {
   const [salvandoPix, setSalvandoPix] = useState(false);
 
   const [assinaturaModal, setAssinaturaModal] = useState(null); // { codigoProvedor, nome }
-  const [assinaturaForm, setAssinaturaForm] = useState({ valor_mensalidade: "", data_adesao: "" });
+  const [assinaturaForm, setAssinaturaForm] = useState({ valor_mensalidade: "", data_adesao: "", plano_id: "" });
   const [salvandoAssinatura, setSalvandoAssinatura] = useState(false);
+  const [planos, setPlanos] = useState([]);
 
   const [recibo, setRecibo] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const [dados, config] = await Promise.all([Admin.listarFaturamento(), Admin.obterConfigPix()]);
+      const [dados, config, listaPlanos] = await Promise.all([Admin.listarFaturamento(), Admin.obterConfigPix(), Admin.listarPlanos()]);
       setLista(dados);
       setPix(config);
+      setPlanos(listaPlanos.filter((p) => p.ativo));
     } catch (err) {
       toast(err.message || "Erro ao carregar faturamento");
     } finally {
@@ -52,8 +54,18 @@ export default function AdminFaturamentoPage() {
     setAssinaturaForm({
       valor_mensalidade: item.valor_mensalidade != null ? String(item.valor_mensalidade) : "",
       data_adesao: item.data_adesao ? String(item.data_adesao).slice(0, 10) : "",
+      plano_id: item.plano_id != null ? String(item.plano_id) : "",
     });
     setAssinaturaModal({ codigoProvedor: item.codigo_provedor, nome: item.provedor_nome });
+  };
+
+  const selecionarPlano = (planoId) => {
+    const plano = planos.find((p) => String(p.id) === planoId);
+    setAssinaturaForm((f) => ({
+      ...f,
+      plano_id: planoId,
+      valor_mensalidade: plano ? String(plano.valor_mensalidade) : f.valor_mensalidade,
+    }));
   };
 
   const salvarAssinatura = async () => {
@@ -64,6 +76,7 @@ export default function AdminFaturamentoPage() {
       await Admin.configurarAssinatura(assinaturaModal.codigoProvedor, {
         valor_mensalidade: Number(assinaturaForm.valor_mensalidade),
         data_adesao: assinaturaForm.data_adesao,
+        plano_id: assinaturaForm.plano_id || null,
       });
       setAssinaturaModal(null);
       await load();
@@ -271,12 +284,27 @@ export default function AdminFaturamentoPage() {
       <Modal open={!!assinaturaModal} onClose={() => setAssinaturaModal(null)} title={`Assinatura — ${assinaturaModal?.nome || ""}`}>
         <div className="space-y-4">
           <div>
+            <Label>Plano</Label>
+            <Select value={assinaturaForm.plano_id} onChange={(e) => selecionarPlano(e.target.value)}>
+              <option value="">Personalizado (sem plano)</option>
+              {planos.map((p) => (
+                <option key={p.id} value={p.id}>{p.nome} — {brl(p.valor_mensalidade)}</option>
+              ))}
+            </Select>
+            {assinaturaForm.plano_id && (
+              <p className="text-[11px] text-text-dim mt-1.5">
+                Ao salvar, os módulos do provedor são ajustados pra bater com o plano.
+              </p>
+            )}
+          </div>
+          <div>
             <Label>Valor da mensalidade (R$)</Label>
             <Input
               value={assinaturaForm.valor_mensalidade}
               onChange={(e) => setAssinaturaForm((f) => ({ ...f, valor_mensalidade: e.target.value }))}
               inputMode="decimal"
               placeholder="ex.: 199.90"
+              disabled={!!assinaturaForm.plano_id}
             />
           </div>
           <div>

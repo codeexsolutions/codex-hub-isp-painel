@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tag, MapPin } from "lucide-react";
-import { Beneficios } from "../services/store";
+import { Beneficios, ClubeBeneficios } from "../services/store";
 import { resolveImageUrl } from "../services/format";
 import { useToast } from "../components/Toast";
+import { Label, Input, Help } from "../components/Field";
 
 const CATEGORIAS = [
   { value: "entretenimento", label: "Entretenimento" },
@@ -37,6 +38,29 @@ export default function BeneficiosTab({ provedor }) {
     return () => clearInterval(interval);
   }, [load]);
 
+  const [clube, setClube] = useState({ nome: "", mensagem: "" });
+  const [savingClube, setSavingClube] = useState(false);
+
+  useEffect(() => {
+    ClubeBeneficios.obter()
+      .then((c) => setClube({ nome: c?.nome || "", mensagem: c?.mensagem || "" }))
+      .catch(() => {});
+  }, []);
+
+  const setClubeCampo = (k) => (e) => setClube((f) => ({ ...f, [k]: e.target.value }));
+
+  const salvarClube = async () => {
+    setSavingClube(true);
+    try {
+      await ClubeBeneficios.salvar(clube);
+      toast("Identidade do clube salva");
+    } catch (err) {
+      toast(err.message || "Erro ao salvar identidade do clube");
+    } finally {
+      setSavingClube(false);
+    }
+  };
+
   const toggle = async (oferta) => {
     const novoValor = !ativoParaMim(oferta);
     setSalvandoId(oferta.id);
@@ -57,6 +81,35 @@ export default function BeneficiosTab({ provedor }) {
         Catálogo de ofertas cadastradas pelos parceiros. Ative as que fizerem sentido pra sua
         base — elas passam a aparecer na Central de Benefícios do aplicativo.
       </p>
+
+      <div className="bg-surface rounded-2xl border border-border p-5 space-y-4 max-w-2xl">
+        <div>
+          <h3 className="text-sm text-text font-display">Identidade do clube de benefícios</h3>
+          <p className="text-xs text-text-dim mt-1">Dê um nome próprio à seção de benefícios no app — em vez de "Benefícios", os clientes veem a marca do seu clube.</p>
+        </div>
+
+        <div>
+          <Label>Nome do clube</Label>
+          <Input value={clube.nome} onChange={setClubeCampo("nome")} placeholder="ex.: Clube ConectaFibra" maxLength={60} />
+        </div>
+
+        <div>
+          <Label>Mensagem de apresentação</Label>
+          <Input value={clube.mensagem} onChange={setClubeCampo("mensagem")} placeholder="ex.: Vantagens exclusivas pra você, cliente ConectaFibra" maxLength={160} />
+          <Help>Deixe em branco pra usar os textos padrão ("Benefícios" / "Vantagens exclusivas para clientes do seu provedor").</Help>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={salvarClube}
+            disabled={savingClube}
+            className="px-6 py-2.5 rounded-xl bg-accent text-white text-sm
+              hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+          >
+            {savingClube ? "Salvando…" : "Salvar identidade"}
+          </button>
+        </div>
+      </div>
 
       {loading ? (
         <div className="text-sm text-text-dim text-center py-12">Carregando…</div>

@@ -9,6 +9,7 @@ import AdminPontosPage from "./pages/admin/AdminPontosPage";
 import AdminRelatoriosPage from "./pages/admin/AdminRelatoriosPage";
 import AdminParceirosPage from "./pages/admin/AdminParceirosPage";
 import AdminFaturamentoPage from "./pages/admin/AdminFaturamentoPage";
+import AdminPlanosPage from "./pages/admin/AdminPlanosPage";
 
 export default function AdminApp() {
   const [logado, setLogado] = useState(() => !!Admin.atual());
@@ -29,6 +30,7 @@ export default function AdminApp() {
           {aba === "relatorios" && <AdminRelatoriosPage />}
           {aba === "parceiros" && <AdminParceirosPage />}
           {aba === "faturamento" && <AdminFaturamentoPage />}
+          {aba === "planos" && <AdminPlanosPage />}
         </AdminShell>
       ) : (
         <AdminLoginPage onLogin={() => setLogado(true)} />

@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Label, Input, Help, ColorField, FieldRow } from "../components/Field";
-import { Temas } from "../services/store";
+import { Temas, HomeConfig, Atendimento } from "../services/store";
 import { resolveImageUrl, normalizarHex } from "../services/format";
 import { useToast } from "../components/Toast";
+
+const BLOCOS_HOME = [
+  { key: "banner", label: "Banners", descricao: "Carrossel de banners/campanhas no topo da Home" },
+  { key: "fatura", label: "Fatura em aberto", descricao: "Card com a fatura pendente e botão de pagar" },
+  { key: "consumo", label: "Consumo mensal", descricao: "Gráfico de download/upload do mês" },
+  { key: "atalhos", label: "Atalhos", descricao: "Grade de atalhos (2ª via, suporte, contrato, indicação…)" },
+];
 
 export default function TemaTab({ provedor }) {
   const toast = useToast();
@@ -11,7 +18,53 @@ export default function TemaTab({ provedor }) {
   });
   const [saving, setSaving] = useState(false);
   const [logoPrev, setLogoPrev] = useState('')
-  
+
+  const [homeConfig, setHomeConfig] = useState(null);
+  const [salvandoBloco, setSalvandoBloco] = useState(null);
+
+  useEffect(() => {
+    HomeConfig.obter().then(setHomeConfig).catch(() => setHomeConfig({ banner: true, fatura: true, consumo: true, atalhos: true }));
+  }, []);
+
+  const alternarBloco = async (chave) => {
+    const novoConfig = { ...homeConfig, [chave]: !homeConfig[chave] };
+    setSalvandoBloco(chave);
+    try {
+      const salvo = await HomeConfig.salvar(novoConfig);
+      setHomeConfig(salvo);
+    } catch (err) {
+      toast(err.message || "Erro ao salvar configuração da Home");
+    } finally {
+      setSalvandoBloco(null);
+    }
+  };
+
+  const [atendimento, setAtendimento] = useState({ whatsapp: "", telefone: "", email: "", site: "", instagram: "" });
+  const [savingAtendimento, setSavingAtendimento] = useState(false);
+
+  useEffect(() => {
+    Atendimento.obter()
+      .then((a) => setAtendimento({
+        whatsapp: a?.whatsapp || "", telefone: a?.telefone || "", email: a?.email || "",
+        site: a?.site || "", instagram: a?.instagram || "",
+      }))
+      .catch(() => {});
+  }, []);
+
+  const setAtend = (k) => (e) => setAtendimento((f) => ({ ...f, [k]: e.target.value }));
+
+  const salvarAtendimento = async () => {
+    setSavingAtendimento(true);
+    try {
+      await Atendimento.salvar(atendimento);
+      toast("Canais de atendimento salvos");
+    } catch (err) {
+      toast(err.message || "Erro ao salvar canais de atendimento");
+    } finally {
+      setSavingAtendimento(false);
+    }
+  };
+
   const logoRef = useRef(null);
   const faviconRef = useRef(null);
   const icon192Ref = useRef(null);
@@ -185,6 +238,92 @@ export default function TemaTab({ provedor }) {
         >
           {saving ? "Salvando…" : "Salvar tema"}
         </button>
+      </div>
+
+      {/* Blocos da Home do app */}
+      <div className="bg-surface rounded-2xl border border-border p-5 space-y-4">
+        <div>
+          <h3 className="text-sm text-text font-display">Blocos da Home do app</h3>
+          <p className="text-xs text-text-dim mt-1">Escolha o que aparece na tela inicial do app dos seus clientes.</p>
+        </div>
+
+        {!homeConfig ? (
+          <div className="text-xs text-text-dim py-4">Carregando…</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {BLOCOS_HOME.map((bloco) => {
+              const ativo = homeConfig[bloco.key];
+              const salvandoEste = salvandoBloco === bloco.key;
+              return (
+                <div key={bloco.key} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <div className="text-sm text-text">{bloco.label}</div>
+                    <div className="text-[11px] text-text-dim mt-0.5">{bloco.descricao}</div>
+                  </div>
+                  <button
+                    onClick={() => alternarBloco(bloco.key)}
+                    disabled={salvandoEste}
+                    aria-pressed={ativo}
+                    className={`w-11 h-6 rounded-full relative transition-colors disabled:opacity-50 shrink-0 ${
+                      ativo ? "bg-accent" : "bg-surface-3"
+                    }`}
+                  >
+                    <span
+                      className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all"
+                      style={{ left: ativo ? 22 : 2 }}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Canais de atendimento */}
+      <div className="bg-surface rounded-2xl border border-border p-5 space-y-4">
+        <div>
+          <h3 className="text-sm text-text font-display">Canais de atendimento</h3>
+          <p className="text-xs text-text-dim mt-1">Exibidos pro cliente na tela de suporte do app. Deixe em branco pra ocultar um canal.</p>
+        </div>
+
+        <FieldRow>
+          <div>
+            <Label>WhatsApp</Label>
+            <Input value={atendimento.whatsapp} onChange={setAtend("whatsapp")} placeholder="(85) 99999-9999" />
+          </div>
+          <div>
+            <Label>Telefone</Label>
+            <Input value={atendimento.telefone} onChange={setAtend("telefone")} placeholder="(85) 3333-3333" />
+          </div>
+        </FieldRow>
+
+        <FieldRow>
+          <div>
+            <Label>E-mail</Label>
+            <Input value={atendimento.email} onChange={setAtend("email")} placeholder="contato@suaempresa.com.br" />
+          </div>
+          <div>
+            <Label>Site</Label>
+            <Input value={atendimento.site} onChange={setAtend("site")} placeholder="https://suaempresa.com.br" />
+          </div>
+        </FieldRow>
+
+        <div>
+          <Label>Instagram</Label>
+          <Input value={atendimento.instagram} onChange={setAtend("instagram")} placeholder="@suaempresa" className="max-w-xs" />
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <button
+            onClick={salvarAtendimento}
+            disabled={savingAtendimento}
+            className="px-6 py-2.5 rounded-xl bg-accent text-white text-sm
+              hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+          >
+            {savingAtendimento ? "Salvando…" : "Salvar canais"}
+          </button>
+        </div>
       </div>
     </div>
   );

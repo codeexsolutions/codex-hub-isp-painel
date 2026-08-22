@@ -217,6 +217,69 @@ export const Temas = {
   },
 };
 
+export const HomeConfig = {
+  async obter() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/home-config");
+      return extrairData(json);
+    }
+    return { banner: true, fatura: true, consumo: true, atalhos: true };
+  },
+
+  async salvar(config) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/home-config", {
+        method: "PUT",
+        body: JSON.stringify(config),
+      });
+      return extrairData(json);
+    }
+    return config;
+  },
+};
+
+export const Atendimento = {
+  async obter() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/atendimento");
+      return extrairData(json);
+    }
+    return { whatsapp: "", telefone: "", email: "", site: "", instagram: "" };
+  },
+
+  async salvar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/atendimento", {
+        method: "PUT",
+        body: JSON.stringify(dados),
+      });
+      return extrairData(json);
+    }
+    return dados;
+  },
+};
+
+export const ClubeBeneficios = {
+  async obter() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/clube-beneficios");
+      return extrairData(json);
+    }
+    return { nome: "", mensagem: "" };
+  },
+
+  async salvar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/clube-beneficios", {
+        method: "PUT",
+        body: JSON.stringify(dados),
+      });
+      return extrairData(json);
+    }
+    return dados;
+  },
+};
+
 export const Banners = {
   async listar(provedorId) {
     if (CONFIG.USE_API) { const json = await request("/painel/provedor/banners"); return extrairData(json) || []; }
@@ -384,6 +447,22 @@ export const Admin = {
   },
   async definirConfigPix(dados) {
     const json = await this._request("/painel/admin/config-pix", { method: "PUT", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+  async listarPlanos() {
+    const json = await this._request("/painel/admin/planos");
+    return extrairData(json) || [];
+  },
+  async criarPlano(dados) {
+    const json = await this._request("/painel/admin/planos", { method: "POST", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+  async editarPlano(id, dados) {
+    const json = await this._request(`/painel/admin/planos/${id}`, { method: "PUT", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+  async definirStatusPlano(id, ativo) {
+    const json = await this._request(`/painel/admin/planos/${id}/status`, { method: "PATCH", body: JSON.stringify({ ativo }) });
     return extrairData(json);
   },
 };
@@ -621,6 +700,31 @@ export const Notificacoes = {
       return extrairData(json);
     }
     return null;
+  },
+
+  async listarTemplates() {
+    if (CONFIG.USE_API) {
+      const json = await request("/notificacoes/templates");
+      return extrairData(json) || [];
+    }
+    return [];
+  },
+
+  async criarTemplate(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/notificacoes/templates", {
+        method: "POST",
+        body: JSON.stringify(dados),
+      });
+      return extrairData(json);
+    }
+    return dados;
+  },
+
+  async excluirTemplate(id) {
+    if (CONFIG.USE_API) {
+      await request(`/notificacoes/templates/${id}`, { method: "DELETE" });
+    }
   },
 };
 

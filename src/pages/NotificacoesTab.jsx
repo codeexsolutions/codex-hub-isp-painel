@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Bell, Send, Clock, Users, AlertCircle, CheckCircle2, Search, UserCheck, BellOff, X } from "lucide-react";
+import { Bell, Send, Clock, Users, AlertCircle, CheckCircle2, Search, UserCheck, BellOff, X, BookmarkPlus, LayoutTemplate } from "lucide-react";
 import { Label, Input, Textarea, Select } from "../components/Field";
 import { Notificacoes } from "../services/store";
 import { formataData, formatarTelefone } from "../services/format";
@@ -274,8 +274,49 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [salvandoTemplate, setSalvandoTemplate] = useState(false);
+
+  useEffect(() => {
+    Notificacoes.listarTemplates().then(setTemplates).catch(() => {});
+  }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const nomeProvedor = provedor?.nome_fantasia || provedor?.empresa || "";
+
+  const aplicarTemplate = (tpl) => {
+    setForm((f) => ({
+      ...f,
+      titulo: tpl.titulo.replaceAll("{provedor}", nomeProvedor),
+      mensagem: tpl.corpo.replaceAll("{provedor}", nomeProvedor),
+    }));
+  };
+
+  const salvarComoTemplate = async () => {
+    if (!form.titulo.trim() || !form.mensagem.trim()) { toast("Preencha título e mensagem antes de salvar como modelo"); return; }
+    const nome = window.prompt("Nome do modelo (ex.: Fatura vencendo)");
+    if (!nome?.trim()) return;
+    setSalvandoTemplate(true);
+    try {
+      const novo = await Notificacoes.criarTemplate({ nome: nome.trim(), titulo: form.titulo.trim(), corpo: form.mensagem.trim() });
+      setTemplates((lista) => [novo, ...lista]);
+      toast("Modelo salvo");
+    } catch (err) {
+      toast(err.message || "Erro ao salvar modelo");
+    } finally {
+      setSalvandoTemplate(false);
+    }
+  };
+
+  const excluirTemplate = async (id) => {
+    try {
+      await Notificacoes.excluirTemplate(id);
+      setTemplates((lista) => lista.filter((t) => t.id !== id));
+    } catch (err) {
+      toast(err.message || "Erro ao excluir modelo");
+    }
+  };
 
   const enviar = async () => {
     if (!form.titulo.trim()) { toast("Informe o título da notificação"); return; }
@@ -316,6 +357,30 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
       <div className="bg-surface rounded-2xl border border-border p-5 space-y-4">
         <h3 className="text-sm text-text font-display">Nova notificação push</h3>
 
+        {templates.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <LayoutTemplate size={13} className="text-text-dim" />
+              <span className="text-[11px] text-text-dim">Modelos salvos</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {templates.map((tpl) => (
+                <span
+                  key={tpl.id}
+                  className="inline-flex items-center gap-1 text-[11px] pl-2.5 pr-1.5 py-1 rounded-full bg-surface-2 border border-border text-text-sub"
+                >
+                  <button type="button" onClick={() => aplicarTemplate(tpl)} className="hover:text-accent transition-colors">
+                    {tpl.nome}
+                  </button>
+                  <button type="button" onClick={() => excluirTemplate(tpl.id)} className="text-text-dim hover:text-danger p-0.5">
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <Label>Destinatários</Label>
           <Select value={form.destino} onChange={(e) => { set("destino")(e); if (e.target.value !== "selecionados") setSelecionados([]); }}>
@@ -352,11 +417,24 @@ function EnviarNotificacao({ provedor, toast, onSent }) {
             placeholder="ex.: Sua fatura de julho já está disponível no app. Acesse para visualizar."
             maxLength={240}
           />
-          <div className="flex justify-end mt-1">
-            <span className={`text-[11px] ${form.mensagem.length > 200 ? "text-warning" : "text-text-dim"}`}>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-[11px] text-text-dim">
+              Variáveis: <code className="text-text-sub">{"{provedor}"}</code> preenche sozinho ·
+              <code className="text-text-sub"> {"{nome}"}</code>, <code className="text-text-sub">{"{valor}"}</code>,
+              <code className="text-text-sub"> {"{vencimento}"}</code> você ajusta na hora, por cliente
+            </p>
+            <span className={`text-[11px] shrink-0 ml-2 ${form.mensagem.length > 200 ? "text-warning" : "text-text-dim"}`}>
               {form.mensagem.length}/240
             </span>
           </div>
+          <button
+            type="button"
+            onClick={salvarComoTemplate}
+            disabled={salvandoTemplate}
+            className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-text-sub hover:text-accent transition-colors disabled:opacity-50"
+          >
+            <BookmarkPlus size={13} /> Salvar como modelo
+          </button>
         </div>
 
         <div>
