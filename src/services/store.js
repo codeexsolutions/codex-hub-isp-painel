@@ -259,6 +259,75 @@ export const Atendimento = {
   },
 };
 
+export const IxcOsConfig = {
+  async obter() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-os-config");
+      return extrairData(json);
+    }
+    return { id_assunto: "", id_filial: "", setor: "", id_evento_mensagem: "" };
+  },
+
+  async salvar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-os-config", {
+        method: "PUT",
+        body: JSON.stringify(dados),
+      });
+      return extrairData(json);
+    }
+    return dados;
+  },
+};
+
+export const IxcAssuntos = {
+  async listar() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-assuntos");
+      return extrairData(json) || [];
+    }
+    return [];
+  },
+
+  async criar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-assuntos", {
+        method: "POST",
+        body: JSON.stringify(dados),
+      });
+      return extrairData(json);
+    }
+    return dados;
+  },
+
+  async excluir(id) {
+    if (CONFIG.USE_API) {
+      await request(`/painel/provedor/ixc-assuntos/${id}`, { method: "DELETE" });
+    }
+  },
+};
+
+export const IxcContratoConfig = {
+  async obter() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-contrato-config");
+      return extrairData(json);
+    }
+    return { resource_imprimir: "" };
+  },
+
+  async salvar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-contrato-config", {
+        method: "PUT",
+        body: JSON.stringify(dados),
+      });
+      return extrairData(json);
+    }
+    return dados;
+  },
+};
+
 export const ClubeBeneficios = {
   async obter() {
     if (CONFIG.USE_API) {
