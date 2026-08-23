@@ -530,6 +530,14 @@ export const Admin = {
     const json = await this._request("/painel/admin/config-pix", { method: "PUT", body: JSON.stringify(dados) });
     return extrairData(json);
   },
+  async obterConfigIptv() {
+    const json = await this._request("/painel/admin/config-iptv");
+    return extrairData(json);
+  },
+  async definirConfigIptv(urlPadrao) {
+    const json = await this._request("/painel/admin/config-iptv", { method: "PUT", body: JSON.stringify({ url_padrao: urlPadrao }) });
+    return extrairData(json);
+  },
   async listarPlanos() {
     const json = await this._request("/painel/admin/planos");
     return extrairData(json) || [];
