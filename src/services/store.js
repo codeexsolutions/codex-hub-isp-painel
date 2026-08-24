@@ -538,6 +538,26 @@ export const Admin = {
     const json = await this._request("/painel/admin/config-iptv", { method: "PUT", body: JSON.stringify({ url_padrao: urlPadrao }) });
     return extrairData(json);
   },
+  async obterConfigLicencaTv() {
+    const json = await this._request("/painel/admin/config-licenca-tv");
+    return extrairData(json);
+  },
+  async definirConfigLicencaTv(valorAnual) {
+    const json = await this._request("/painel/admin/config-licenca-tv", { method: "PUT", body: JSON.stringify({ valor_anual: valorAnual }) });
+    return extrairData(json);
+  },
+  async listarLicencasTv() {
+    const json = await this._request("/painel/admin/licencas-tv");
+    return extrairData(json) || [];
+  },
+  async aprovarLicencaTv(id) {
+    const json = await this._request(`/painel/admin/licencas-tv/${id}/aprovar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async cancelarLicencaTv(id) {
+    const json = await this._request(`/painel/admin/licencas-tv/${id}/cancelar`, { method: "PATCH" });
+    return extrairData(json);
+  },
   async listarPlanos() {
     const json = await this._request("/painel/admin/planos");
     return extrairData(json) || [];
