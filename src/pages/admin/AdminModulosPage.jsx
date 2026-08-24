@@ -7,7 +7,8 @@ const MODULOS = [
   { key: "beneficios", label: "Benefícios" },
   { key: "recompensas", label: "Recompensas" },
   { key: "desbloqueio_confianca", label: "Desbloqueio de confiança" },
-  { key: "iptv", label: "IPTV Ao Vivo" },
+  { key: "iptv", label: "IPTV Ao Vivo (app do assinante)" },
+  { key: "app_tv", label: "App Synk TV" },
 ];
 
 export default function AdminModulosPage() {

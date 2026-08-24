@@ -10,6 +10,8 @@ const MODULOS = [
   { key: "beneficios", label: "Benefícios" },
   { key: "recompensas", label: "Recompensas" },
   { key: "desbloqueio_confianca", label: "Desbloqueio de confiança" },
+  { key: "app_tv", label: "App Synk TV" },
+  { key: "iptv", label: "IPTV Ao Vivo (app do assinante)" },
 ];
 
 const FORM_VAZIO = { nome: "", valor_mensalidade: "", modulos: [], ordem: "" };
