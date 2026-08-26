@@ -217,6 +217,33 @@ export const Temas = {
   },
 };
 
+export const AtivacaoTv = {
+  async listar() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/tv-ativacoes");
+      return extrairData(json);
+    }
+    return [];
+  },
+
+  async gerar(clienteNome) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/tv-ativacoes", {
+        method: "POST",
+        body: JSON.stringify({ clienteNome }),
+      });
+      return extrairData(json);
+    }
+  },
+
+  async revogar(id) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/tv-ativacoes/${id}`, { method: "DELETE" });
+      return extrairData(json);
+    }
+  },
+};
+
 export const HomeConfig = {
   async obter() {
     if (CONFIG.USE_API) {
@@ -497,6 +524,14 @@ export const Admin = {
     const json = await this._request(`/painel/admin/parceiros/${id}/contato`, { method: "PATCH", body: JSON.stringify({ endereco, contato }) });
     return extrairData(json);
   },
+  async aprovarParceiro(id, usuario, senha) {
+    const json = await this._request(`/painel/admin/parceiros/${id}/aprovar`, { method: "PATCH", body: JSON.stringify({ usuario, senha }) });
+    return extrairData(json);
+  },
+  async rejeitarParceiro(id) {
+    const json = await this._request(`/painel/admin/parceiros/${id}/rejeitar`, { method: "PATCH" });
+    return extrairData(json);
+  },
   async validarCompra(id) {
     const json = await this._request(`/painel/admin/compras/${id}/validar`, { method: "PATCH" });
     return extrairData(json);
@@ -542,8 +577,8 @@ export const Admin = {
     const json = await this._request("/painel/admin/config-licenca-tv");
     return extrairData(json);
   },
-  async definirConfigLicencaTv(valorAnual) {
-    const json = await this._request("/painel/admin/config-licenca-tv", { method: "PUT", body: JSON.stringify({ valor_anual: valorAnual }) });
+  async definirConfigLicencaTv(dados) {
+    const json = await this._request("/painel/admin/config-licenca-tv", { method: "PUT", body: JSON.stringify(dados) });
     return extrairData(json);
   },
   async listarLicencasTv() {

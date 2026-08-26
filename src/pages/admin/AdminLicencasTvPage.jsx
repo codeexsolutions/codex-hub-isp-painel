@@ -21,9 +21,11 @@ const COR_STATUS = {
   cancelada: "border-border bg-surface-2 text-text-dim",
 };
 
+const CONFIG_VAZIA = { valor_anual: "", chave_pix: "", nome_recebedor: "", cidade: "" };
+
 export default function AdminLicencasTvPage() {
   const toast = useToast();
-  const [valorAnual, setValorAnual] = useState("");
+  const [config, setConfig] = useState(CONFIG_VAZIA);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -33,8 +35,13 @@ export default function AdminLicencasTvPage() {
 
   const load = useCallback(async () => {
     try {
-      const config = await Admin.obterConfigLicencaTv();
-      setValorAnual(String(config?.valor_anual ?? ""));
+      const dados = await Admin.obterConfigLicencaTv();
+      setConfig({
+        valor_anual: String(dados?.valor_anual ?? ""),
+        chave_pix: dados?.chave_pix ?? "",
+        nome_recebedor: dados?.nome_recebedor ?? "",
+        cidade: dados?.cidade ?? "",
+      });
     } catch (err) {
       toast(err.message || "Erro ao carregar configuração de licença");
     } finally {
@@ -54,11 +61,18 @@ export default function AdminLicencasTvPage() {
 
   useEffect(() => { load(); loadLicencas(); }, [load, loadLicencas]);
 
+  const setCampo = (campo) => (e) => setConfig((c) => ({ ...c, [campo]: e.target.value }));
+
   const salvar = async () => {
     setSaving(true);
     try {
-      await Admin.definirConfigLicencaTv(Number(valorAnual));
-      toast("Valor da licença salvo");
+      await Admin.definirConfigLicencaTv({
+        valor_anual: Number(config.valor_anual),
+        chave_pix: config.chave_pix.trim(),
+        nome_recebedor: config.nome_recebedor.trim(),
+        cidade: config.cidade.trim(),
+      });
+      toast("Configuração da licença salva");
     } catch (err) {
       toast(err.message || "Erro ao salvar");
     } finally {
@@ -107,15 +121,34 @@ export default function AdminLicencasTvPage() {
       <div className="bg-surface rounded-2xl border border-border p-5 space-y-4 max-w-sm">
         <div>
           <Label>Valor da licença anual (R$)</Label>
-          <Input value={valorAnual} onChange={(e) => setValorAnual(e.target.value)} inputMode="decimal" />
+          <Input value={config.valor_anual} onChange={setCampo("valor_anual")} inputMode="decimal" />
         </div>
+
+        <div className="border-t border-border pt-4">
+          <p className="text-[11px] text-text-dim mb-3">
+            Chave PIX própria da licença — separada da chave usada em Faturamento/Comissão.
+          </p>
+          <Label>Chave PIX</Label>
+          <Input value={config.chave_pix} onChange={setCampo("chave_pix")} placeholder="e-mail, telefone, CPF/CNPJ ou aleatória" />
+        </div>
+
+        <div>
+          <Label>Nome do recebedor</Label>
+          <Input value={config.nome_recebedor} onChange={setCampo("nome_recebedor")} placeholder="ex.: SYNK SOLUCOES" />
+        </div>
+
+        <div>
+          <Label>Cidade</Label>
+          <Input value={config.cidade} onChange={setCampo("cidade")} placeholder="ex.: FORTALEZA" />
+        </div>
+
         <button
           onClick={salvar}
           disabled={saving}
           className="px-6 py-2.5 rounded-xl bg-accent text-white text-sm
             hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
         >
-          {saving ? "Salvando…" : "Salvar valor"}
+          {saving ? "Salvando…" : "Salvar configuração"}
         </button>
       </div>
 

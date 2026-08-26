@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X, CreditCard,
+  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X, CreditCard, Tv,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -16,6 +16,10 @@ const NAV_BENEFICIOS = [
   { key: "compras", icon: Receipt, label: "Relatórios", requer: "beneficios" },
 ];
 
+const NAV_TV = [
+  { key: "tv-ativacao", icon: Tv, label: "Ativação TV", requer: "app_tv" },
+];
+
 const NAV_RESTO = [
   { key: "faturamento", icon: CreditCard, label: "Faturamento" },
   { key: "notificacoes", icon: Bell, label: "Notificações" },
@@ -23,12 +27,13 @@ const NAV_RESTO = [
   { key: "avaliacoes", icon: Star, label: "Avaliações" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios, temRecompensas }) {
+export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios, temRecompensas, temAppTv }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const modulosAtivos = { beneficios: temBeneficios, recompensas: temRecompensas };
+  const modulosAtivos = { beneficios: temBeneficios, recompensas: temRecompensas, app_tv: temAppTv };
   const NAV = [
     ...NAV_BASE,
     ...NAV_BENEFICIOS.filter((item) => modulosAtivos[item.requer]),
+    ...NAV_TV.filter((item) => modulosAtivos[item.requer]),
     ...NAV_RESTO,
   ];
 

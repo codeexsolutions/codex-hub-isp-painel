@@ -16,6 +16,10 @@ export default function AdminParceirosPage() {
   const [contatoModalId, setContatoModalId] = useState(null);
   const [contatoForm, setContatoForm] = useState({ endereco: "", contato: "" });
   const [salvandoContato, setSalvandoContato] = useState(false);
+  const [aprovarModal, setAprovarModal] = useState(null);
+  const [aprovarForm, setAprovarForm] = useState({ usuario: "", senha: "" });
+  const [aprovando, setAprovando] = useState(false);
+  const [rejeitandoId, setRejeitandoId] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -101,6 +105,41 @@ export default function AdminParceirosPage() {
     }
   };
 
+  const abrirAprovarModal = (parceiro) => {
+    setAprovarForm({ usuario: "", senha: "" });
+    setAprovarModal(parceiro);
+  };
+
+  const aprovar = async () => {
+    if (!aprovarForm.usuario.trim() || !aprovarForm.senha.trim()) {
+      toast("Defina usuário e senha de acesso"); return;
+    }
+    setAprovando(true);
+    try {
+      await Admin.aprovarParceiro(aprovarModal.id, aprovarForm.usuario.trim(), aprovarForm.senha.trim());
+      setAprovarModal(null);
+      await load();
+      toast("Parceiro aprovado — credenciais liberadas");
+    } catch (err) {
+      toast(err.message || "Erro ao aprovar parceiro");
+    } finally {
+      setAprovando(false);
+    }
+  };
+
+  const rejeitar = async (parceiro) => {
+    setRejeitandoId(parceiro.id);
+    try {
+      await Admin.rejeitarParceiro(parceiro.id);
+      await load();
+      toast("Pré-cadastro rejeitado");
+    } catch (err) {
+      toast(err.message || "Erro ao rejeitar parceiro");
+    } finally {
+      setRejeitandoId(null);
+    }
+  };
+
   const abrirContatoModal = (parceiro) => {
     setContatoForm({ endereco: parceiro.endereco || "", contato: parceiro.contato || "" });
     setContatoModalId(parceiro.id);
@@ -122,12 +161,55 @@ export default function AdminParceirosPage() {
     }
   };
 
+  const pendentes = lista.filter((p) => p.status === "pendente");
+  const demais = lista.filter((p) => p.status !== "pendente");
+
   return (
     <div className="space-y-6">
       <p className="text-xs text-text-dim max-w-lg">
         Contas de acesso ao painel do parceiro (<code className="text-text-sub">/parceiro</code>) — financeiro e validação de cupom.
         O provedor vincula um benefício a um parceiro cadastrado aqui na aba Benefícios.
       </p>
+
+      {pendentes.length > 0 && (
+        <div className="bg-surface rounded-2xl border border-accent/30 p-5 space-y-4">
+          <div>
+            <h3 className="text-sm text-text font-display">Pré-cadastros pendentes</h3>
+            <p className="text-xs text-text-dim mt-1">Vieram do formulário de Parcerias do site — revise e aprove ou rejeite.</p>
+          </div>
+          <div className="divide-y divide-border">
+            {pendentes.map((p) => (
+              <div key={p.id} className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div className="min-w-0">
+                  <div className="text-sm text-text">{p.nome}</div>
+                  <div className="text-[11px] text-text-dim mt-0.5">
+                    {[p.cidade, p.uf].filter(Boolean).join("/") || "Sem localização"}
+                    {p.contato && ` · ${p.contato}`}
+                  </div>
+                  {p.observacoes && (
+                    <div className="text-[11px] text-text-dim mt-1 max-w-md italic">"{p.observacoes}"</div>
+                  )}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => rejeitar(p)}
+                    disabled={rejeitandoId === p.id}
+                    className="px-3 py-1.5 rounded-lg text-xs border border-border text-text-sub hover:text-danger hover:border-danger/30 transition-colors disabled:opacity-50"
+                  >
+                    {rejeitandoId === p.id ? "Rejeitando…" : "Rejeitar"}
+                  </button>
+                  <button
+                    onClick={() => abrirAprovarModal(p)}
+                    className="px-3 py-1.5 rounded-lg text-xs bg-accent text-white hover:bg-accent-hover transition-colors"
+                  >
+                    Aprovar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-surface rounded-2xl border border-border p-5 space-y-4 max-w-xl">
         <h3 className="text-sm text-text font-display">Novo parceiro</h3>
@@ -185,7 +267,7 @@ export default function AdminParceirosPage() {
 
       {loading ? (
         <div className="text-sm text-text-dim text-center py-12">Carregando…</div>
-      ) : !lista.length ? (
+      ) : !demais.length ? (
         <div className="text-center py-16">
           <Handshake size={40} className="mx-auto text-text-dim mb-3 opacity-40" />
           <p className="text-sm text-text-dim">Nenhum parceiro cadastrado ainda.</p>
@@ -204,7 +286,7 @@ export default function AdminParceirosPage() {
               </tr>
             </thead>
             <tbody>
-              {lista.map((p) => (
+              {demais.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 text-text">{p.nome}</td>
                   <td className="px-4 py-3 text-text-sub">{p.usuario}</td>
@@ -260,17 +342,23 @@ export default function AdminParceirosPage() {
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => toggle(p)}
-                      disabled={salvandoId === p.id}
-                      className={`text-[10px] px-2 py-0.5 rounded-full border cursor-pointer transition-colors disabled:opacity-50 ${
-                        p.ativo
-                          ? "text-success border-success/30 bg-success/8 hover:bg-success/15"
-                          : "text-danger border-danger/30 bg-danger/8 hover:bg-danger/15"
-                      }`}
-                    >
-                      {p.ativo ? "Ativo" : "Inativo"}
-                    </button>
+                    {p.status === "rejeitado" ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full border text-text-dim border-border bg-surface-2">
+                        Rejeitado
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => toggle(p)}
+                        disabled={salvandoId === p.id}
+                        className={`text-[10px] px-2 py-0.5 rounded-full border cursor-pointer transition-colors disabled:opacity-50 ${
+                          p.ativo
+                            ? "text-success border-success/30 bg-success/8 hover:bg-success/15"
+                            : "text-danger border-danger/30 bg-danger/8 hover:bg-danger/15"
+                        }`}
+                      >
+                        {p.ativo ? "Ativo" : "Inativo"}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -311,6 +399,35 @@ export default function AdminParceirosPage() {
               className="px-5 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors disabled:opacity-50"
             >
               {salvandoContato ? "Salvando…" : "Salvar"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={aprovarModal != null} onClose={() => setAprovarModal(null)} title="Aprovar parceiro">
+        <div className="space-y-4">
+          <p className="text-xs text-text-dim">
+            Defina o usuário e a senha de acesso ao portal do parceiro (<code className="text-text-sub">/parceiro</code>) pra <strong className="text-text-sub">{aprovarModal?.nome}</strong>.
+            Envie essas credenciais pra ele por WhatsApp/e-mail depois de aprovar.
+          </p>
+          <div>
+            <Label>Usuário</Label>
+            <Input value={aprovarForm.usuario} onChange={(e) => setAprovarForm((f) => ({ ...f, usuario: e.target.value }))} placeholder="ex.: cinemax" />
+          </div>
+          <div>
+            <Label>Senha</Label>
+            <Input value={aprovarForm.senha} onChange={(e) => setAprovarForm((f) => ({ ...f, senha: e.target.value }))} type="text" placeholder="senha de acesso" />
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <button onClick={() => setAprovarModal(null)} className="px-4 py-2 rounded-xl text-sm text-text-sub hover:text-text border border-border hover:border-border-2 transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={aprovar}
+              disabled={aprovando}
+              className="px-5 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors disabled:opacity-50"
+            >
+              {aprovando ? "Aprovando…" : "Aprovar parceiro"}
             </button>
           </div>
         </div>
