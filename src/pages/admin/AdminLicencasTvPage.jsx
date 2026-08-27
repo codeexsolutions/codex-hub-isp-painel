@@ -33,6 +33,10 @@ export default function AdminLicencasTvPage() {
   const [loadingLicencas, setLoadingLicencas] = useState(true);
   const [salvandoId, setSalvandoId] = useState(null);
 
+  const [criarNome, setCriarNome] = useState("");
+  const [criarTelefone, setCriarTelefone] = useState("");
+  const [criando, setCriando] = useState(false);
+
   const load = useCallback(async () => {
     try {
       const dados = await Admin.obterConfigLicencaTv();
@@ -93,6 +97,28 @@ export default function AdminLicencasTvPage() {
     }
   };
 
+  // Criação manual — usada quando o cliente pede a ativação por fora do app
+  // (WhatsApp etc., já que o app não gera mais o pedido/PIX sozinho). Reaproveita
+  // a mesma lógica do fluxo público antigo, só que o admin preenche os dados.
+  const criarLicenca = async () => {
+    if (!criarNome.trim() || !criarTelefone.trim()) {
+      toast("Informe nome e telefone");
+      return;
+    }
+    setCriando(true);
+    try {
+      const resultado = await Admin.criarLicencaTv(criarNome.trim(), criarTelefone.trim());
+      setCriarNome("");
+      setCriarTelefone("");
+      await loadLicencas();
+      toast(`Licença criada: ${resultado.chave} — envie essa chave pro cliente`);
+    } catch (err) {
+      toast(err.message || "Erro ao criar licença");
+    } finally {
+      setCriando(false);
+    }
+  };
+
   const cancelar = async (item) => {
     if (!confirm(`Cancelar a licença de ${item.nome}?`)) return;
     setSalvandoId(item.id);
@@ -149,6 +175,35 @@ export default function AdminLicencasTvPage() {
             hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
         >
           {saving ? "Salvando…" : "Salvar configuração"}
+        </button>
+      </div>
+
+      <div className="bg-surface rounded-2xl border border-border p-5 space-y-4 max-w-sm">
+        <div>
+          <h3 className="text-sm text-text font-display">Criar licença manualmente</h3>
+          <p className="text-xs text-text-dim mt-1">
+            Pra cliente que pediu ativação por fora do app (WhatsApp, etc.). Gera a chave já —
+            copie e envie pra ele digitar no app.
+          </p>
+        </div>
+
+        <div>
+          <Label>Nome do cliente</Label>
+          <Input value={criarNome} onChange={(e) => setCriarNome(e.target.value)} placeholder="Nome" />
+        </div>
+
+        <div>
+          <Label>Telefone</Label>
+          <Input value={criarTelefone} onChange={(e) => setCriarTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+        </div>
+
+        <button
+          onClick={criarLicenca}
+          disabled={criando}
+          className="px-6 py-2.5 rounded-xl bg-accent text-white text-sm
+            hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+        >
+          {criando ? "Criando…" : "Criar licença"}
         </button>
       </div>
 

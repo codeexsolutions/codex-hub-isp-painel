@@ -585,6 +585,10 @@ export const Admin = {
     const json = await this._request("/painel/admin/licencas-tv");
     return extrairData(json) || [];
   },
+  async criarLicencaTv(nome, telefone) {
+    const json = await this._request("/painel/admin/licencas-tv", { method: "POST", body: JSON.stringify({ nome, telefone }) });
+    return extrairData(json);
+  },
   async aprovarLicencaTv(id) {
     const json = await this._request(`/painel/admin/licencas-tv/${id}/aprovar`, { method: "PATCH" });
     return extrairData(json);
