@@ -72,7 +72,7 @@ export default function ParceiroFinanceiroPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             {comissao.pixQrCode && (
               <div className="shrink-0 self-center sm:self-start bg-white p-3 rounded-xl border border-border">
-                <img src={comissao.pixQrCode} alt="QR code PIX" width={160} height={160} className="w-40 h-40" />
+                <img src={comissao.pixQrCode} alt="QR code PIX" width={220} height={220} className="w-56 h-56" />
               </div>
             )}
             <div className="flex-1 flex flex-col gap-2 min-w-0">
