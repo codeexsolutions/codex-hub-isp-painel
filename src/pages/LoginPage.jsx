@@ -46,10 +46,13 @@ function LoginForm({ onLogin, onGoRegister }) {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Provedor fixo de demonstração (ver synk-api SQL 2026_08_provedor_demo.sql)
+  // — dados fabricados, sem cliente/dado real por trás, seguro pra divulgar
+  // publicamente na landing page.
   const handleDemo = () => {
-    setCodigoProvedor("1");
-    setUsuario("admin.fortal");
-    setSenha("demo123");
+    setCodigoProvedor("999");
+    setUsuario("demo");
+    setSenha("demo1234");
   };
 
   const handleSubmit = async (e) => {
@@ -110,9 +113,9 @@ function LoginForm({ onLogin, onGoRegister }) {
         <button type="button" onClick={onGoRegister} className="text-xs text-accent hover:text-accent-hover transition-colors">
           Ainda não tenho provedor cadastrado
         </button>
-        {/* <button type="button" onClick={handleDemo} className="text-[11px] text-text-dim hover:text-text-sub transition-colors">
+        <button type="button" onClick={handleDemo} className="text-[11px] text-text-dim hover:text-text-sub transition-colors">
           Usar acesso de demonstração
-        </button> */}
+        </button>
       </div>
     </form>
   );
