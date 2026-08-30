@@ -878,6 +878,35 @@ export const Notificacoes = {
       await request(`/notificacoes/templates/${id}`, { method: "DELETE" });
     }
   },
+
+  async obterChavePublica() {
+    const json = await request("/notificacoes/public-key");
+    return extrairData(json);
+  },
+};
+
+// Central de notificações do PAINEL (sino do provedor) — separada do objeto
+// Notificacoes acima, que é o disparo de push PARA os assinantes do app.
+export const NotificacoesPainel = {
+  async inscrever(subscription) {
+    const json = await request("/painel/notificacoes/inscrever", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+    });
+    return extrairData(json);
+  },
+  async listar() {
+    const json = await request("/painel/notificacoes");
+    return extrairData(json) || [];
+  },
+  async contarNaoLidas() {
+    const json = await request("/painel/notificacoes/nao-lidas");
+    return extrairData(json) || 0;
+  },
+  async marcarLida(id) {
+    const json = await request(`/painel/notificacoes/${id}/lida`, { method: "PATCH" });
+    return extrairData(json);
+  },
 };
 
 export const Sessao = {

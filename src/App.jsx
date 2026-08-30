@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Sessao, Modulos } from "./services/store";
 import { ToastProvider } from "./components/Toast";
+import { PwaInstallProvider } from "./context/PwaInstallContext";
+import { registrarPushNotificationPainel } from "./services/pushNotification";
+import InstallBanner from "./components/InstallBanner";
 import LoginPage from "./pages/LoginPage";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
@@ -20,6 +23,14 @@ import AdminApp from "./AdminApp";
 import ParceiroApp from "./ParceiroApp";
 
 export default function App() {
+  return (
+    <PwaInstallProvider>
+      <AppRoteado />
+    </PwaInstallProvider>
+  );
+}
+
+function AppRoteado() {
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
     return <AdminApp />;
   }
@@ -45,6 +56,16 @@ function ProviderApp() {
   useEffect(() => {
     if (!provedor) return;
     Modulos.meus().then(setModulos).catch(() => setModulos([]));
+  }, [provedor]);
+
+  // Pede permissão de notificação e inscreve o dispositivo assim que loga
+  // (ou já loga sozinho ao voltar com sessão salva) — mesmo padrão do
+  // synk-app. Silencioso: se o navegador negar a permissão, só não ativa.
+  useEffect(() => {
+    if (!provedor) return;
+    registrarPushNotificationPainel().catch((error) => {
+      console.error("Erro ao registrar notificações do painel:", error);
+    });
   }, [provedor]);
 
   const handleLogin = (p) => {
@@ -129,6 +150,7 @@ function ProviderApp() {
 
         <main className="flex-1 flex flex-col min-w-0">
           <Topbar activeTab={activeTab} status={provedor.status} />
+          <InstallBanner />
           <div className="flex-1 overflow-y-auto">
             {renderTab()}
           </div>
