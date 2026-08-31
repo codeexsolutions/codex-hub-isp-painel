@@ -114,7 +114,7 @@ function SinoNotificacoes() {
       </button>
 
       {aberto && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-surface border border-border rounded-2xl shadow-soft z-20">
+        <div className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] max-h-96 overflow-y-auto bg-surface border border-border rounded-2xl shadow-soft z-20">
           <div className="px-4 py-3 border-b border-border text-xs font-medium text-text">Notificações</div>
 
           {carregando ? (
