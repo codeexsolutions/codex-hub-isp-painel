@@ -15,6 +15,7 @@ const TITULOS = {
   notificacoes: ["Notificações Push", "Envie notificações para os assinantes do app"],
   indicacoes: ["Indicações", "Clientes que indicaram novos assinantes pelo aplicativo"],
   avaliacoes: ["Avaliações", "Clientes que avaliaram o serviço"],
+  "planos-moveis": ["Internet Móvel", "Planos de dados móvel que o cliente pode solicitar pelo app"],
 };
 
 const INTERVALO_POLL_MS = 30000;

@@ -19,6 +19,7 @@ import NotificacoesTab from "./pages/NotificacoesTab";
 import IndicacoesTab from "./pages/IndicacoesTab";
 import AvaliacoesTab from "./pages/AvaliacoesTab";
 import AtivacaoTvTab from "./pages/AtivacaoTvTab";
+import PlanosMovelTab from "./pages/PlanosMovelTab";
 import AdminApp from "./AdminApp";
 import ParceiroApp from "./ParceiroApp";
 
@@ -103,6 +104,7 @@ function ProviderApp() {
   const temBeneficios = modulos.includes("beneficios");
   const temRecompensas = modulos.includes("recompensas");
   const temAppTv = modulos.includes("app_tv");
+  const temPlanosMoveis = modulos.includes("planos_moveis");
 
   const renderTab = () => {
     switch (activeTab) {
@@ -130,6 +132,8 @@ function ProviderApp() {
         return <AvaliacoesTab provedor={provedor} />;
       case "tv-ativacao":
         return temAppTv ? <AtivacaoTvTab /> : null;
+      case "planos-moveis":
+        return temPlanosMoveis ? <PlanosMovelTab /> : null;
       default:
         return null;
     }
@@ -146,6 +150,7 @@ function ProviderApp() {
           temBeneficios={temBeneficios}
           temRecompensas={temRecompensas}
           temAppTv={temAppTv}
+          temPlanosMoveis={temPlanosMoveis}
         />
 
         <main className="flex-1 flex flex-col min-w-0">

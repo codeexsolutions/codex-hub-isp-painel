@@ -9,6 +9,7 @@ const MODULOS = [
   { key: "desbloqueio_confianca", label: "Desbloqueio de confiança" },
   { key: "iptv", label: "IPTV Ao Vivo (app do assinante)" },
   { key: "app_tv", label: "App Synk TV" },
+  { key: "planos_moveis", label: "Internet Móvel (planos de dados)" },
 ];
 
 export default function AdminModulosPage() {

@@ -12,6 +12,7 @@ const MODULOS = [
   { key: "desbloqueio_confianca", label: "Desbloqueio de confiança" },
   { key: "app_tv", label: "App Synk TV" },
   { key: "iptv", label: "IPTV Ao Vivo (app do assinante)" },
+  { key: "planos_moveis", label: "Internet Móvel (planos de dados)" },
 ];
 
 const FORM_VAZIO = { nome: "", valor_mensalidade: "", modulos: [], ordem: "" };

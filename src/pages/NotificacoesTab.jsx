@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Bell, Send, Clock, Users, AlertCircle, CheckCircle2, Search, UserCheck, BellOff, X, BookmarkPlus, LayoutTemplate } from "lucide-react";
 import { Label, Input, Textarea, Select } from "../components/Field";
 import { Notificacoes } from "../services/store";
-import { formataData, formatarTelefone } from "../services/format";
+import { formataData } from "../services/format";
 import { useToast } from "../components/Toast";
 
 export default function NotificacoesTab({ provedor }) {
@@ -106,10 +106,12 @@ function AssinantesNotificacao({ toast }) {
   const filtrados = busca
     ? assinantes.filter((a) => {
         const termo = busca.toLowerCase();
+        const termoDigitos = busca.replace(/\D/g, "");
+        const cpfDigitos = (a.cpf || "").replace(/\D/g, "");
         return (
-          (a.nome || a.Nome || "").toLowerCase().includes(termo) ||
-          (a.cpf || a.Cpf || a.CpfCnpj || "").includes(termo) ||
-          (a.email || a.Email || "").toLowerCase().includes(termo)
+          (a.nome || "").toLowerCase().includes(termo) ||
+          (a.cpf || "").toLowerCase().includes(termo) ||
+          (termoDigitos && cpfDigitos.includes(termoDigitos))
         );
       })
     : assinantes;
@@ -142,19 +144,17 @@ function AssinantesNotificacao({ toast }) {
         {resultadoCpf && (
           <div className="bg-surface-2 rounded-xl border border-border p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-sm">
-              {(resultadoCpf.nome || resultadoCpf.Nome || "?")[0].toUpperCase()}
+              {(resultadoCpf.nome || "?")[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-text">{resultadoCpf.nome || resultadoCpf.Nome}</p>
+              <p className="text-sm text-text">{resultadoCpf.nome || "Nome não identificado"}</p>
               <p className="text-xs text-text-dim">
-                {resultadoCpf.cpf || resultadoCpf.Cpf || resultadoCpf.CpfCnpj}
-                {(resultadoCpf.email || resultadoCpf.Email) && (
-                  <span className="ml-2">{resultadoCpf.email || resultadoCpf.Email}</span>
-                )}
+                {resultadoCpf.cpf}
+                <span className="ml-2">{resultadoCpf.dispositivos} dispositivo{resultadoCpf.dispositivos !== 1 ? "s" : ""}</span>
               </p>
             </div>
             <div className="flex items-center gap-1.5">
-              {resultadoCpf.notificacao_ativa || resultadoCpf.NotificacaoAtiva ? (
+              {resultadoCpf.notificacaoAtiva ? (
                 <>
                   <Bell size={14} className="text-success" />
                   <span className="text-[10px] text-success">Ativa</span>
@@ -210,21 +210,17 @@ function AssinantesNotificacao({ toast }) {
                 <tr className="border-b border-border text-text-dim text-xs text-left">
                   <th className="px-5 py-3">Nome</th>
                   <th className="px-5 py-3">CPF/CNPJ</th>
-                  <th className="px-5 py-3">Email</th>
-                  <th className="px-5 py-3">Contato</th>
+                  <th className="px-5 py-3">Dispositivos</th>
+                  <th className="px-5 py-3">Último login</th>
                   <th className="px-5 py-3">Notificação</th>
                 </tr>
               </thead>
               <tbody>
                 {filtrados.map((a, idx) => {
-                  const nome = a.nome || a.Nome || "-";
-                  const cpf = a.cpf || a.Cpf || a.CpfCnpj || "-";
-                  const email = a.email || a.Email || "-";
-                  const contato = a.contato || a.Contato || a.telefone || a.Telefone || "";
-                  const ativa = a.notificacao_ativa ?? a.NotificacaoAtiva ?? a.push_ativo ?? true;
+                  const nome = a.nome || "Não identificado";
 
                   return (
-                    <tr key={a.id || a.Id || idx} className="border-b border-border/50 last:border-0 hover:bg-surface-2/50 transition-colors">
+                    <tr key={a.cpf || idx} className="border-b border-border/50 last:border-0 hover:bg-surface-2/50 transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-xl bg-surface-3 flex items-center justify-center text-xs text-text-sub uppercase">
@@ -233,13 +229,11 @@ function AssinantesNotificacao({ toast }) {
                           <span className="text-sm text-text">{nome}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-xs text-text-sub">{cpf}</td>
-                      <td className="px-5 py-3 text-xs text-text-sub">{email}</td>
-                      <td className="px-5 py-3 text-xs text-text-sub">
-                        {contato ? formatarTelefone(contato) : "-"}
-                      </td>
+                      <td className="px-5 py-3 text-xs text-text-sub">{a.cpf}</td>
+                      <td className="px-5 py-3 text-xs text-text-sub">{a.dispositivos}</td>
+                      <td className="px-5 py-3 text-xs text-text-sub">{a.ultimoLogin ? formataData(a.ultimoLogin) : "-"}</td>
                       <td className="px-5 py-3">
-                        {ativa ? (
+                        {a.notificacaoAtiva ? (
                           <span className="inline-flex items-center gap-1 text-[10px] text-success">
                             <Bell size={12} /> Ativa
                           </span>
@@ -623,7 +617,7 @@ function SeletorClientes({ selecionados, onChange, toast }) {
                     ${marcado ? "bg-accent/5" : "hover:bg-surface-2/50"}`}
                 >
                   <input type="checkbox" checked={marcado} onChange={() => alternar(a.cpf)} className="accent-[var(--accent)]" />
-                  <span className="text-text-sub">{a.cpf}</span>
+                  <span className="text-text-sub">{a.nome ? `${a.nome} · ${a.cpf}` : a.cpf}</span>
                 </label>
               );
             })

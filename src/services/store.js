@@ -758,6 +758,28 @@ export const Recompensas = {
   },
 };
 
+export const PlanosMoveis = {
+  async listar() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/planos-moveis"); return extrairData(json) || []; }
+    return [];
+  },
+  async criar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/planos-moveis", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async atualizar(id, dados) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/planos-moveis/${id}`, { method: "PATCH", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async remover(id) {
+    if (CONFIG.USE_API) { await request(`/painel/provedor/planos-moveis/${id}`, { method: "DELETE" }); }
+  },
+};
+
 // Ofertas são criadas pelo parceiro (ver objeto Parceiro) — o provedor só vê o
 // catálogo de todas as ofertas disponíveis e ativa/desativa pra própria base.
 export const Beneficios = {
@@ -856,7 +878,7 @@ export const Notificacoes = {
 
   async buscarPorCpf(cpf) {
     if (CONFIG.USE_API) {
-      const json = await request(`/painel/provedor/notificacoes/buscarPorCpf?cpf=${encodeURIComponent(cpf)}`);
+      const json = await request(`/notificacoes/buscarPorCpf?cpf=${encodeURIComponent(cpf)}`);
       return extrairData(json);
     }
     return null;
