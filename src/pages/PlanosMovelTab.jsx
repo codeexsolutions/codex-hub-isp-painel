@@ -1,10 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { Smartphone, Pencil, Trash2 } from "lucide-react";
+import { Smartphone, Pencil, Trash2, Inbox, CheckCircle2, XCircle } from "lucide-react";
 import Modal from "../components/Modal";
 import { Label, Input, Select } from "../components/Field";
 import { PlanosMoveis } from "../services/store";
 import { useToast } from "../components/Toast";
-import { brl } from "../utils/faturamento";
+import { brl, dataBR } from "../utils/faturamento";
+
+const LABEL_STATUS_SOLICITACAO = { pendente: "Pendente", atendida: "Atendida", cancelada: "Cancelada" };
+const COR_STATUS_SOLICITACAO = {
+  pendente: "border-warning/30 bg-warning/10 text-warning",
+  atendida: "border-success/30 bg-success/10 text-success",
+  cancelada: "border-border bg-surface-2 text-text-dim",
+};
 
 export default function PlanosMovelTab() {
   const toast = useToast();
@@ -13,6 +20,10 @@ export default function PlanosMovelTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(initialForm());
+
+  const [solicitacoes, setSolicitacoes] = useState([]);
+  const [loadingSolic, setLoadingSolic] = useState(true);
+  const [salvandoSolicId, setSalvandoSolicId] = useState(null);
 
   function initialForm() {
     return { nome: "", gb_plano: "", gb_bonus: "", valor: "", ordem: "", ativo: "true" };
@@ -27,6 +38,35 @@ export default function PlanosMovelTab() {
       setLoading(false);
     }
   }, []);
+
+  const loadSolicitacoes = useCallback(async () => {
+    try {
+      setSolicitacoes(await PlanosMoveis.listarSolicitacoes());
+    } catch (err) {
+      toast(err.message || "Erro ao carregar solicitações");
+    } finally {
+      setLoadingSolic(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSolicitacoes();
+    const interval = setInterval(loadSolicitacoes, 30000);
+    return () => clearInterval(interval);
+  }, [loadSolicitacoes]);
+
+  const atualizarStatusSolicitacao = async (id, status) => {
+    setSalvandoSolicId(id);
+    try {
+      await PlanosMoveis.atualizarStatusSolicitacao(id, status);
+      await loadSolicitacoes();
+      toast(status === "atendida" ? "Solicitação marcada como atendida" : "Solicitação cancelada");
+    } catch (err) {
+      toast(err.message || "Erro ao atualizar solicitação");
+    } finally {
+      setSalvandoSolicId(null);
+    }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -86,10 +126,77 @@ export default function PlanosMovelTab() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      <div>
+        <p className="text-xs text-text-dim mb-2 font-medium">Solicitações de clientes</p>
+        {loadingSolic ? (
+          <div className="text-sm text-text-dim text-center py-8">Carregando…</div>
+        ) : !solicitacoes.length ? (
+          <div className="text-center py-10 bg-surface rounded-2xl border border-border">
+            <Inbox size={28} className="mx-auto text-text-dim mb-2 opacity-40" />
+            <p className="text-sm text-text-dim">Nenhuma solicitação ainda.</p>
+          </div>
+        ) : (
+          <div className="bg-surface rounded-2xl border border-border overflow-hidden overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-text-dim uppercase tracking-wide">
+                  <th className="px-4 py-3 font-normal">Cliente</th>
+                  <th className="px-4 py-3 font-normal">CPF/CNPJ</th>
+                  <th className="px-4 py-3 font-normal">Plano</th>
+                  <th className="px-4 py-3 font-normal">Valor</th>
+                  <th className="px-4 py-3 font-normal">Solicitado em</th>
+                  <th className="px-4 py-3 font-normal">Status</th>
+                  <th className="px-4 py-3 font-normal"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {solicitacoes.map((s) => {
+                  const salvando = salvandoSolicId === s.id;
+                  return (
+                    <tr key={s.id} className="border-b border-border last:border-0 hover:bg-surface-2/50 transition-colors">
+                      <td className="px-4 py-3 text-text">{s.cliente_nome || "-"}</td>
+                      <td className="px-4 py-3 text-text-sub">{s.cliente_cpf_cnpj}</td>
+                      <td className="px-4 py-3 text-text-sub">{s.plano_nome}</td>
+                      <td className="px-4 py-3 text-text-sub">{brl(s.plano_valor)}</td>
+                      <td className="px-4 py-3 text-text-sub">{dataBR(s.criado_em)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${COR_STATUS_SOLICITACAO[s.status]}`}>
+                          {LABEL_STATUS_SOLICITACAO[s.status]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {s.status === "pendente" && (
+                          <div className="flex items-center gap-2 justify-end">
+                            <button
+                              onClick={() => atualizarStatusSolicitacao(s.id, "atendida")}
+                              disabled={salvando}
+                              className="text-[11px] px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <CheckCircle2 size={12} /> Atendida
+                            </button>
+                            <button
+                              onClick={() => atualizarStatusSolicitacao(s.id, "cancelada")}
+                              disabled={salvando}
+                              className="text-[11px] px-2.5 py-1 rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <XCircle size={12} /> Cancelar
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-xs text-text-dim max-w-md">
-          Planos de internet móvel que aparecem pro cliente no app. Quando ele escolhe um, vira um
-          chamado de suporte pra sua equipe finalizar a venda — não existe ativação automática.
+          Planos de internet móvel que aparecem pro cliente no app. A solicitação chega pra você
+          aqui em cima e no sino de notificações — não existe ativação automática.
         </p>
         <button
           onClick={() => openModal()}

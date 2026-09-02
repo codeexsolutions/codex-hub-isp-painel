@@ -778,6 +778,16 @@ export const PlanosMoveis = {
   async remover(id) {
     if (CONFIG.USE_API) { await request(`/painel/provedor/planos-moveis/${id}`, { method: "DELETE" }); }
   },
+  async listarSolicitacoes() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/planos-moveis/solicitacoes"); return extrairData(json) || []; }
+    return [];
+  },
+  async atualizarStatusSolicitacao(id, status) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/planos-moveis/solicitacoes/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      return extrairData(json);
+    }
+  },
 };
 
 // Ofertas são criadas pelo parceiro (ver objeto Parceiro) — o provedor só vê o
