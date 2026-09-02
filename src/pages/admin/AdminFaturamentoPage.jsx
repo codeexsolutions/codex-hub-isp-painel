@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { CreditCard, CheckCircle2, XCircle, Printer, Settings } from "lucide-react";
+import { Fragment, useState, useEffect, useCallback } from "react";
+import { CreditCard, CheckCircle2, XCircle, Printer, Settings, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
 import Modal from "../../components/Modal";
 import { Label, Input, Select } from "../../components/Field";
 import { Admin } from "../../services/store";
@@ -21,6 +21,13 @@ export default function AdminFaturamentoPage() {
   const [planos, setPlanos] = useState([]);
 
   const [recibo, setRecibo] = useState(null);
+
+  // Linha expandida — mostra TODAS as faturas do provedor, não só a mais
+  // relevante que aparece na listagem geral (evita marcar como paga a
+  // fatura errada quando existe mais de uma em aberto).
+  const [expandido, setExpandido] = useState(null); // codigoProvedor
+  const [faturasExpandido, setFaturasExpandido] = useState([]);
+  const [carregandoExpandido, setCarregandoExpandido] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -88,11 +95,37 @@ export default function AdminFaturamentoPage() {
     }
   };
 
-  const marcarPago = async (item) => {
-    setSalvandoId(item.fatura_id);
+  const recarregarExpandido = async (codigoProvedor) => {
+    if (expandido !== codigoProvedor) return;
     try {
-      await Admin.marcarFaturaPaga(item.fatura_id);
-      await load();
+      setFaturasExpandido(await Admin.listarFaturasProvedor(codigoProvedor));
+    } catch {
+      // silencioso — a lista principal já foi recarregada
+    }
+  };
+
+  const alternarExpandido = async (codigoProvedor) => {
+    if (expandido === codigoProvedor) {
+      setExpandido(null);
+      return;
+    }
+    setExpandido(codigoProvedor);
+    setCarregandoExpandido(true);
+    try {
+      setFaturasExpandido(await Admin.listarFaturasProvedor(codigoProvedor));
+    } catch (err) {
+      toast(err.message || "Erro ao carregar faturas");
+      setFaturasExpandido([]);
+    } finally {
+      setCarregandoExpandido(false);
+    }
+  };
+
+  const marcarPago = async (idFatura, codigoProvedor) => {
+    setSalvandoId(idFatura);
+    try {
+      await Admin.marcarFaturaPaga(idFatura);
+      await Promise.all([load(), recarregarExpandido(codigoProvedor)]);
       toast("Fatura marcada como paga");
     } catch (err) {
       toast(err.message || "Erro ao marcar como paga");
@@ -101,15 +134,31 @@ export default function AdminFaturamentoPage() {
     }
   };
 
-  const cancelarFatura = async (item) => {
+  const cancelarFatura = async (idFatura, codigoProvedor) => {
     if (!confirm("Cancelar esta fatura?")) return;
-    setSalvandoId(item.fatura_id);
+    setSalvandoId(idFatura);
     try {
-      await Admin.marcarFaturaCancelada(item.fatura_id);
-      await load();
+      await Admin.marcarFaturaCancelada(idFatura);
+      await Promise.all([load(), recarregarExpandido(codigoProvedor)]);
       toast("Fatura cancelada");
     } catch (err) {
       toast(err.message || "Erro ao cancelar");
+    } finally {
+      setSalvandoId(null);
+    }
+  };
+
+  // Desfaz um "marcar como pago" (ou "cancelar") feito por engano — volta a
+  // fatura pra pendente.
+  const desfazerFatura = async (idFatura, codigoProvedor) => {
+    if (!confirm("Desfazer esta baixa e voltar a fatura para pendente?")) return;
+    setSalvandoId(idFatura);
+    try {
+      await Admin.reabrirFatura(idFatura);
+      await Promise.all([load(), recarregarExpandido(codigoProvedor)]);
+      toast("Fatura reaberta como pendente");
+    } catch (err) {
+      toast(err.message || "Erro ao desfazer");
     } finally {
       setSalvandoId(null);
     }
@@ -183,6 +232,7 @@ export default function AdminFaturamentoPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-text-dim uppercase tracking-wide">
+                <th className="px-4 py-3 font-normal w-8"></th>
                 <th className="px-4 py-3 font-normal">Provedor</th>
                 <th className="px-4 py-3 font-normal">Mensalidade</th>
                 <th className="px-4 py-3 font-normal">Vencimento</th>
@@ -197,83 +247,205 @@ export default function AdminFaturamentoPage() {
                 const status = semAssinatura ? null : statusFatura({ status: item.fatura_status, vencimento: item.vencimento });
                 const salvandoFatura = salvandoId === item.fatura_id;
                 const salvandoStatus = salvandoId === `status-${item.codigo_provedor}`;
+                const aberto = expandido === item.codigo_provedor;
+                const temMaisDeUmaPendente = Number(item.faturas_pendentes) > 1;
                 return (
-                  <tr key={item.codigo_provedor} className="border-b border-border last:border-0 hover:bg-surface-2/50 transition-colors">
-                    <td className="px-4 py-3 text-text">{item.provedor_nome}</td>
-                    <td className="px-4 py-3 text-text-sub">{semAssinatura ? "-" : brl(item.valor_mensalidade)}</td>
-                    <td className="px-4 py-3 text-text-sub">{semAssinatura || !item.vencimento ? "-" : dataBR(item.vencimento)}</td>
-                    <td className="px-4 py-3">
-                      {status ? (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${corStatusFatura(status)}`}>
-                          {LABEL_STATUS_FATURA[status]}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-surface-2 text-text-dim">
-                          Sem assinatura
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleProvedor(item)}
-                        disabled={salvandoStatus}
-                        className={`text-[10px] px-2 py-0.5 rounded-full border cursor-pointer transition-colors disabled:opacity-50 ${
-                          item.provedor_status === "ATIVO"
-                            ? "text-success border-success/30 bg-success/8 hover:bg-success/15"
-                            : "text-danger border-danger/30 bg-danger/8 hover:bg-danger/15"
-                        }`}
-                      >
-                        {item.provedor_status === "ATIVO" ? "Ativo" : "Inativo"}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 justify-end">
-                        {semAssinatura ? (
+                  <Fragment key={item.codigo_provedor}>
+                    <tr className="border-b border-border last:border-0 hover:bg-surface-2/50 transition-colors">
+                      <td className="px-4 py-3">
+                        {!semAssinatura && (
                           <button
-                            onClick={() => abrirAssinaturaModal(item)}
-                            className="text-[11px] px-2.5 py-1 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors"
+                            onClick={() => alternarExpandido(item.codigo_provedor)}
+                            className="text-text-dim hover:text-text transition-colors"
+                            title="Ver todas as faturas"
                           >
-                            Configurar assinatura
+                            {aberto ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                           </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-text">
+                        {item.provedor_nome}
+                        {temMaisDeUmaPendente && (
+                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full border border-warning/30 bg-warning/8 text-warning">
+                            {item.faturas_pendentes} em aberto
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-text-sub">{semAssinatura ? "-" : brl(item.valor_mensalidade)}</td>
+                      <td className="px-4 py-3 text-text-sub">{semAssinatura || !item.vencimento ? "-" : dataBR(item.vencimento)}</td>
+                      <td className="px-4 py-3">
+                        {status ? (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${corStatusFatura(status)}`}>
+                            {LABEL_STATUS_FATURA[status]}
+                          </span>
                         ) : (
-                          <>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-surface-2 text-text-dim">
+                            Sem assinatura
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => toggleProvedor(item)}
+                          disabled={salvandoStatus}
+                          className={`text-[10px] px-2 py-0.5 rounded-full border cursor-pointer transition-colors disabled:opacity-50 ${
+                            item.provedor_status === "ATIVO"
+                              ? "text-success border-success/30 bg-success/8 hover:bg-success/15"
+                              : "text-danger border-danger/30 bg-danger/8 hover:bg-danger/15"
+                          }`}
+                        >
+                          {item.provedor_status === "ATIVO" ? "Ativo" : "Inativo"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 justify-end">
+                          {semAssinatura ? (
                             <button
                               onClick={() => abrirAssinaturaModal(item)}
-                              className="text-[11px] px-2 py-1 rounded-lg text-text-sub hover:text-accent transition-colors"
-                              title="Editar assinatura"
+                              className="text-[11px] px-2.5 py-1 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors"
                             >
-                              Editar
+                              Configurar assinatura
                             </button>
-                            {status === "pago" ? (
+                          ) : (
+                            <>
                               <button
-                                onClick={() => gerarRecibo(item)}
-                                className="text-[11px] px-2.5 py-1 rounded-lg bg-surface-2 text-text-sub border border-border hover:text-accent hover:border-accent/30 transition-colors flex items-center gap-1"
+                                onClick={() => abrirAssinaturaModal(item)}
+                                className="text-[11px] px-2 py-1 rounded-lg text-text-sub hover:text-accent transition-colors"
+                                title="Editar assinatura"
                               >
-                                <Printer size={12} /> Recibo
+                                Editar
                               </button>
-                            ) : status === "cancelado" ? null : (
-                              <>
+                              {status === "pago" ? (
+                                <>
+                                  <button
+                                    onClick={() => gerarRecibo(item)}
+                                    className="text-[11px] px-2.5 py-1 rounded-lg bg-surface-2 text-text-sub border border-border hover:text-accent hover:border-accent/30 transition-colors flex items-center gap-1"
+                                  >
+                                    <Printer size={12} /> Recibo
+                                  </button>
+                                  <button
+                                    onClick={() => desfazerFatura(item.fatura_id, item.codigo_provedor)}
+                                    disabled={salvandoFatura}
+                                    className="text-[11px] px-2.5 py-1 rounded-lg bg-surface-2 text-text-sub border border-border hover:text-warning hover:border-warning/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                    title="Desfazer — marcou como pago por engano"
+                                  >
+                                    <RotateCcw size={12} /> Desfazer
+                                  </button>
+                                </>
+                              ) : status === "cancelado" ? (
                                 <button
-                                  onClick={() => marcarPago(item)}
+                                  onClick={() => desfazerFatura(item.fatura_id, item.codigo_provedor)}
                                   disabled={salvandoFatura}
-                                  className="text-[11px] px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                  className="text-[11px] px-2.5 py-1 rounded-lg bg-surface-2 text-text-sub border border-border hover:text-warning hover:border-warning/30 transition-colors disabled:opacity-50 flex items-center gap-1"
                                 >
-                                  <CheckCircle2 size={12} /> Pago
+                                  <RotateCcw size={12} /> Reabrir
                                 </button>
-                                <button
-                                  onClick={() => cancelarFatura(item)}
-                                  disabled={salvandoFatura}
-                                  className="text-[11px] px-2.5 py-1 rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors disabled:opacity-50 flex items-center gap-1"
-                                >
-                                  <XCircle size={12} /> Cancelar
-                                </button>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => marcarPago(item.fatura_id, item.codigo_provedor)}
+                                    disabled={salvandoFatura}
+                                    className="text-[11px] px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                  >
+                                    <CheckCircle2 size={12} /> Pago
+                                  </button>
+                                  <button
+                                    onClick={() => cancelarFatura(item.fatura_id, item.codigo_provedor)}
+                                    disabled={salvandoFatura}
+                                    className="text-[11px] px-2.5 py-1 rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                  >
+                                    <XCircle size={12} /> Cancelar
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+
+                    {aberto && (
+                      <tr className="border-b border-border last:border-0 bg-surface-2/30">
+                        <td colSpan={7} className="px-4 py-3">
+                          {carregandoExpandido ? (
+                            <div className="text-xs text-text-dim py-3 text-center">Carregando…</div>
+                          ) : !faturasExpandido.length ? (
+                            <div className="text-xs text-text-dim py-3 text-center">Nenhuma fatura gerada ainda.</div>
+                          ) : (
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="text-left text-text-dim uppercase tracking-wide">
+                                  <th className="px-3 py-2 font-normal">Competência</th>
+                                  <th className="px-3 py-2 font-normal">Vencimento</th>
+                                  <th className="px-3 py-2 font-normal">Valor</th>
+                                  <th className="px-3 py-2 font-normal">Status</th>
+                                  <th className="px-3 py-2 font-normal">Pago em</th>
+                                  <th className="px-3 py-2 font-normal"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {faturasExpandido.map((f) => {
+                                  const statusF = statusFatura(f);
+                                  const salvandoEssa = salvandoId === f.id;
+                                  return (
+                                    <tr key={f.id} className="border-t border-border/60">
+                                      <td className="px-3 py-2 text-text">{dataBR(f.competencia)}</td>
+                                      <td className="px-3 py-2 text-text-sub">{dataBR(f.vencimento)}</td>
+                                      <td className="px-3 py-2 text-text-sub">{brl(f.valor)}</td>
+                                      <td className="px-3 py-2">
+                                        <span className={`px-2 py-0.5 rounded-full border ${corStatusFatura(statusF)}`}>
+                                          {LABEL_STATUS_FATURA[statusF]}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-2 text-text-dim">{f.pago_em ? dataBR(f.pago_em) : "-"}</td>
+                                      <td className="px-3 py-2">
+                                        <div className="flex items-center gap-2 justify-end">
+                                          {statusF === "pago" ? (
+                                            <button
+                                              onClick={() => desfazerFatura(f.id, item.codigo_provedor)}
+                                              disabled={salvandoEssa}
+                                              className="px-2 py-1 rounded-lg bg-surface text-text-sub border border-border hover:text-warning hover:border-warning/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                            >
+                                              <RotateCcw size={11} /> Desfazer
+                                            </button>
+                                          ) : statusF === "cancelado" ? (
+                                            <button
+                                              onClick={() => desfazerFatura(f.id, item.codigo_provedor)}
+                                              disabled={salvandoEssa}
+                                              className="px-2 py-1 rounded-lg bg-surface text-text-sub border border-border hover:text-warning hover:border-warning/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                            >
+                                              <RotateCcw size={11} /> Reabrir
+                                            </button>
+                                          ) : (
+                                            <>
+                                              <button
+                                                onClick={() => marcarPago(f.id, item.codigo_provedor)}
+                                                disabled={salvandoEssa}
+                                                className="px-2 py-1 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                              >
+                                                <CheckCircle2 size={11} /> Pago
+                                              </button>
+                                              <button
+                                                onClick={() => cancelarFatura(f.id, item.codigo_provedor)}
+                                                disabled={salvandoEssa}
+                                                className="px-2 py-1 rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                              >
+                                                <XCircle size={11} /> Cancelar
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>

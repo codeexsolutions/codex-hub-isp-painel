@@ -553,6 +553,14 @@ export const Admin = {
     const json = await this._request(`/painel/admin/faturas/${id}/cancelar`, { method: "PATCH" });
     return extrairData(json);
   },
+  async reabrirFatura(id) {
+    const json = await this._request(`/painel/admin/faturas/${id}/reabrir`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async listarFaturasProvedor(codigoProvedor) {
+    const json = await this._request(`/painel/admin/faturamento/${codigoProvedor}/faturas`);
+    return extrairData(json) || [];
+  },
   async obterRecibo(id) {
     const json = await this._request(`/painel/admin/faturas/${id}/recibo`);
     return extrairData(json);
