@@ -3,7 +3,9 @@ import { Sessao, Modulos } from "./services/store";
 import { ToastProvider } from "./components/Toast";
 import { PwaInstallProvider } from "./context/PwaInstallContext";
 import { registrarPushNotificationPainel } from "./services/pushNotification";
+import { useAppUpdateWatcher } from "./hooks/useAppUpdateWatcher";
 import InstallBanner from "./components/InstallBanner";
+import AppUpdateBanner from "./components/AppUpdateBanner";
 import LoginPage from "./pages/LoginPage";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
@@ -24,8 +26,10 @@ import AdminApp from "./AdminApp";
 import ParceiroApp from "./ParceiroApp";
 
 export default function App() {
+  const atualizacaoDisponivel = useAppUpdateWatcher();
   return (
     <PwaInstallProvider>
+      {atualizacaoDisponivel && <AppUpdateBanner onAtualizar={() => window.location.reload()} />}
       <AppRoteado />
     </PwaInstallProvider>
   );
