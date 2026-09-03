@@ -26,7 +26,7 @@ export default function PlanosMovelTab() {
   const [salvandoSolicId, setSalvandoSolicId] = useState(null);
 
   function initialForm() {
-    return { nome: "", gb_plano: "", gb_bonus: "", valor: "", ordem: "", ativo: "true" };
+    return { nome: "", tipo: "movel", gb_plano: "", gb_bonus: "", mega_fibra: "", beneficios: "", valor: "", ordem: "", ativo: "true" };
   }
 
   const load = useCallback(async () => {
@@ -76,8 +76,11 @@ export default function PlanosMovelTab() {
       const p = lista.find((x) => x.id === id);
       setForm({
         nome: p?.nome || "",
+        tipo: p?.tipo || "movel",
         gb_plano: p?.gb_plano != null ? String(p.gb_plano) : "",
         gb_bonus: p?.gb_bonus != null ? String(p.gb_bonus) : "",
+        mega_fibra: p?.mega_fibra != null ? String(p.mega_fibra) : "",
+        beneficios: p?.beneficios || "",
         valor: p?.valor != null ? String(p.valor) : "",
         ordem: p?.ordem != null ? String(p.ordem) : "",
         ativo: p?.ativo !== undefined ? String(p.ativo) : "true",
@@ -91,11 +94,15 @@ export default function PlanosMovelTab() {
   const salvar = async () => {
     if (!form.nome.trim()) { toast("Informe o nome do plano (ex.: 20GB)"); return; }
     if (!form.gb_plano || Number(form.gb_plano) <= 0) { toast("Informe a quantidade de GB do plano"); return; }
+    if (form.tipo === "combo" && (!form.mega_fibra || Number(form.mega_fibra) <= 0)) { toast("Informe o Mega da internet fibra do combo"); return; }
     if (!form.valor || Number(form.valor) <= 0) { toast("Informe o valor mensal"); return; }
     const dados = {
       nome: form.nome.trim(),
+      tipo: form.tipo,
       gb_plano: Number(form.gb_plano),
       gb_bonus: Number(form.gb_bonus) || 0,
+      mega_fibra: form.tipo === "combo" ? Number(form.mega_fibra) : null,
+      beneficios: form.beneficios.trim() || null,
       valor: Number(form.valor),
       ordem: Number(form.ordem) || 0,
       ativo: form.ativo === "true",
@@ -222,7 +229,14 @@ export default function PlanosMovelTab() {
         <div className="space-y-4">
           <div>
             <Label>Nome do plano</Label>
-            <Input value={form.nome} onChange={set("nome")} placeholder="ex.: 20GB" />
+            <Input value={form.nome} onChange={set("nome")} placeholder="ex.: 20GB ou Combo Turbo" />
+          </div>
+          <div>
+            <Label>Tipo de plano</Label>
+            <Select value={form.tipo} onChange={set("tipo")}>
+              <option value="movel">Móvel avulso</option>
+              <option value="combo">Combo (móvel + internet fibra)</option>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -233,6 +247,16 @@ export default function PlanosMovelTab() {
               <Label>GB bônus (opcional)</Label>
               <Input value={form.gb_bonus} onChange={set("gb_bonus")} inputMode="numeric" placeholder="ex.: 5" />
             </div>
+          </div>
+          {form.tipo === "combo" && (
+            <div>
+              <Label>Internet fibra do combo (Mega)</Label>
+              <Input value={form.mega_fibra} onChange={set("mega_fibra")} inputMode="numeric" placeholder="ex.: 200" />
+            </div>
+          )}
+          <div>
+            <Label>Benefícios / tags (opcional, separados por vírgula)</Label>
+            <Input value={form.beneficios} onChange={set("beneficios")} placeholder="ex.: Fale ilimitado, Waze ilimitado" />
           </div>
           <div>
             <Label>Valor mensal (R$)</Label>
@@ -266,17 +290,35 @@ export default function PlanosMovelTab() {
 
 function PlanoCard({ plano: p, onEdit, onDelete }) {
   const isAtivo = p.ativo === true || p.ativo === "true";
+  const isCombo = p.tipo === "combo";
   const totalGb = Number(p.gb_plano) + Number(p.gb_bonus || 0);
+  const tags = (p.beneficios || "").split(",").map((t) => t.trim()).filter(Boolean);
   return (
     <div className="bg-surface rounded-2xl border border-border overflow-hidden">
       <div className="p-4 space-y-2">
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 border border-accent/30 text-accent">
-          {totalGb}GB total
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 border border-accent/30 text-accent">
+            {totalGb}GB total
+          </span>
+          {isCombo && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent-muted border border-accent/30 text-accent-hover">
+              Combo + {p.mega_fibra}MEGA
+            </span>
+          )}
+        </div>
         <p className="text-sm text-text">{p.nome}</p>
         <p className="text-xs text-text-sub">
           {p.gb_plano}GB {Number(p.gb_bonus) > 0 ? `+ ${p.gb_bonus}GB bônus` : ""} · {brl(p.valor)}/mês
         </p>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-warning/10 border border-warning/30 text-warning">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         <span className={`text-[10px] px-2 py-0.5 rounded-full border inline-block ${
           isAtivo ? "text-success border-success/30 bg-success/8" : "text-text-dim border-border bg-surface-2"
         }`}>
