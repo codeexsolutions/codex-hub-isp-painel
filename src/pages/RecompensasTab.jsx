@@ -21,7 +21,7 @@ export default function RecompensasTab() {
   }
 
   function initialConcederForm() {
-    return { cliente_cpf_cnpj: "", cliente_nome: "", pontos: "", motivo: "Pagamento em dia" };
+    return { cliente_cpf_cnpj: "", cliente_nome: "", pontos: "", motivo: "Pagamento em dia", motivo_outro: "" };
   }
 
   const load = useCallback(async () => {
@@ -95,14 +95,15 @@ export default function RecompensasTab() {
     if (!concederForm.pontos || Number(concederForm.pontos) <= 0) {
       toast("Informe uma quantidade de pontos válida"); return;
     }
-    if (!concederForm.motivo.trim()) { toast("Informe o motivo"); return; }
+    const motivoFinal = concederForm.motivo === "Outro" ? concederForm.motivo_outro.trim() : concederForm.motivo.trim();
+    if (!motivoFinal) { toast("Informe o motivo"); return; }
     setConcedendo(true);
     try {
       await Recompensas.concederPontos({
         cliente_cpf_cnpj: concederForm.cliente_cpf_cnpj.trim(),
         cliente_nome: concederForm.cliente_nome.trim(),
         pontos: Number(concederForm.pontos),
-        motivo: concederForm.motivo.trim(),
+        motivo: motivoFinal,
       });
       toast(`${concederForm.pontos} pontos concedidos a ${concederForm.cliente_nome}`);
       setConcederOpen(false);
@@ -210,6 +211,13 @@ export default function RecompensasTab() {
               <option value="Outro">Outro</option>
             </Select>
           </div>
+
+          {concederForm.motivo === "Outro" && (
+            <div>
+              <Label>Qual o motivo?</Label>
+              <Input value={concederForm.motivo_outro} onChange={setConceder("motivo_outro")} placeholder="Descreva o motivo" />
+            </div>
+          )}
 
           <div className="flex gap-3 justify-end pt-2">
             <button onClick={() => setConcederOpen(false)} className="px-4 py-2 rounded-xl text-sm text-text-sub hover:text-text border border-border hover:border-border-2 transition-colors">

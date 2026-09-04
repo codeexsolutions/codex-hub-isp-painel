@@ -4,7 +4,7 @@ import { Metricas, Faturamento } from "../services/store";
 import { alertaFatura } from "../utils/faturamento";
 
 const CARDS = [
-  { key: "clientesConectados", label: "Clientes Cadastrados", icon: Users, formato: "numero" },
+  { key: "clientesConectados", label: "Clientes conectados", icon: Users, formato: "numero" },
   { key: "usuariosAtivos", label: "Usuários ativos", icon: UserCheck, formato: "numero" },
   { key: "compras", label: "Compras", icon: ShoppingBag, formato: "numero" },
   { key: "vendasGeradas", label: "Vendas geradas", icon: TrendingUp, formato: "moeda" },
