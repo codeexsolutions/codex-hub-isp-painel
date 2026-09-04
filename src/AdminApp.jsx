@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastProvider } from "./components/Toast";
 import { Admin } from "./services/store";
+import { useSessaoExpirada } from "./hooks/useSessaoExpirada";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminShell from "./pages/admin/AdminShell";
 import AdminModulosPage from "./pages/admin/AdminModulosPage";
@@ -16,9 +17,15 @@ import AdminLicencasTvPage from "./pages/admin/AdminLicencasTvPage";
 export default function AdminApp() {
   const [logado, setLogado] = useState(() => !!Admin.atual());
   const [aba, setAba] = useState("provedores");
+  const [sessaoExpirada, limparSessaoExpirada] = useSessaoExpirada("admin");
+
+  useEffect(() => {
+    if (sessaoExpirada) setLogado(false);
+  }, [sessaoExpirada]);
 
   const handleLogout = () => {
     Admin.sair();
+    limparSessaoExpirada();
     setLogado(false);
   };
 
@@ -37,7 +44,10 @@ export default function AdminApp() {
           {aba === "licencas-tv" && <AdminLicencasTvPage />}
         </AdminShell>
       ) : (
-        <AdminLoginPage onLogin={() => setLogado(true)} />
+        <AdminLoginPage
+          onLogin={() => { limparSessaoExpirada(); setLogado(true); }}
+          mensagem={sessaoExpirada ? "Sessão expirada. Faça login novamente." : null}
+        />
       )}
     </ToastProvider>
   );

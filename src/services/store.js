@@ -39,6 +39,28 @@ function gravar(chave, valor) {
   localStorage.setItem(chave, JSON.stringify(valor));
 }
 
+// Decodifica o payload do JWT (sem validar assinatura — só pra saber se já
+// venceu e evitar mostrar o painel "logado" com token vencido até a primeira
+// requisição falhar). Se não der pra decodificar ou não tiver "exp", deixa o
+// backend decidir (401) em vez de forçar logout por engano.
+function tokenExpirado(token) {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (!payload.exp) return false;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
+// Avisa a árvore de componentes (App/AdminApp/ParceiroApp) que a sessão
+// caiu, pra forçar o logout imediatamente em vez de deixar a tela "logada"
+// parada até o usuário reparar que as chamadas estão falhando.
+function avisarSessaoExpirada(escopo) {
+  window.dispatchEvent(new CustomEvent("synk:sessao-expirada", { detail: { escopo } }));
+}
+
 function extrairData(json) {
   if (json && typeof json === "object" && "data" in json) {
     if (json.statusCode != null && (json.statusCode < 200 || json.statusCode >= 300)) {
@@ -88,6 +110,7 @@ async function request(path, options = {}) {
   if (res.status === 401) {
     localStorage.removeItem(DB_KEYS.token);
     localStorage.removeItem(DB_KEYS.provedorCache);
+    avisarSessaoExpirada("provedor");
     throw new Error((json && json.message) || "Sessão expirada. Faça login novamente.");
   }
   if (!res.ok) {
@@ -178,7 +201,11 @@ export const Provedores = {
   async _obterAtual() {
     if (CONFIG.USE_API) {
       const token = localStorage.getItem(DB_KEYS.token);
-      if (!token) return null;
+      if (!token || tokenExpirado(token)) {
+        localStorage.removeItem(DB_KEYS.token);
+        localStorage.removeItem(DB_KEYS.provedorCache);
+        return null;
+      }
       const cache = localStorage.getItem(DB_KEYS.provedorCache);
       return cache ? JSON.parse(cache) : null;
     }
@@ -425,7 +452,12 @@ export const Admin = {
     return token;
   },
   atual() {
-    return localStorage.getItem(ADMIN_TOKEN_KEY);
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (!token || tokenExpirado(token)) {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      return null;
+    }
+    return token;
   },
   sair() {
     localStorage.removeItem(ADMIN_TOKEN_KEY);
@@ -439,6 +471,7 @@ export const Admin = {
     try { json = texto ? JSON.parse(texto) : null; } catch {}
     if (res.status === 401 || res.status === 403) {
       localStorage.removeItem(ADMIN_TOKEN_KEY);
+      avisarSessaoExpirada("admin");
       throw new Error((json && json.message) || "Sessão de admin expirada.");
     }
     if (!res.ok) throw new Error((json && json.message) || texto || `Erro ${res.status}`);
@@ -651,7 +684,12 @@ export const Parceiro = {
     return token;
   },
   atual() {
-    return localStorage.getItem(PARCEIRO_TOKEN_KEY);
+    const token = localStorage.getItem(PARCEIRO_TOKEN_KEY);
+    if (!token || tokenExpirado(token)) {
+      localStorage.removeItem(PARCEIRO_TOKEN_KEY);
+      return null;
+    }
+    return token;
   },
   sair() {
     localStorage.removeItem(PARCEIRO_TOKEN_KEY);
@@ -668,6 +706,7 @@ export const Parceiro = {
     try { json = texto ? JSON.parse(texto) : null; } catch {}
     if (res.status === 401 || res.status === 403) {
       localStorage.removeItem(PARCEIRO_TOKEN_KEY);
+      avisarSessaoExpirada("parceiro");
       throw new Error((json && json.message) || "Sessão do parceiro expirada.");
     }
     if (!res.ok) throw new Error((json && json.message) || texto || `Erro ${res.status}`);

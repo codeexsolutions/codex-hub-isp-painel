@@ -3,7 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { Label, Input } from "../../components/Field";
 import { Admin } from "../../services/store";
 
-export default function AdminLoginPage({ onLogin }) {
+export default function AdminLoginPage({ onLogin, mensagem }) {
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -43,6 +43,12 @@ export default function AdminLoginPage({ onLogin }) {
             </div>
           </div>
         </div>
+
+        {mensagem && (
+          <div className="mb-4 text-xs text-warning bg-warning/10 border border-warning/20 rounded-xl px-3 py-2.5 text-center">
+            {mensagem}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-surface rounded-3xl border border-border p-6 space-y-4 shadow-soft">
           <div>

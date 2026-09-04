@@ -7,6 +7,7 @@ import { useAppUpdateWatcher } from "./hooks/useAppUpdateWatcher";
 import InstallBanner from "./components/InstallBanner";
 import AppUpdateBanner from "./components/AppUpdateBanner";
 import LoginPage from "./pages/LoginPage";
+import { useSessaoExpirada } from "./hooks/useSessaoExpirada";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import ProvedorTab from "./pages/ProvedorTab";
@@ -50,6 +51,7 @@ function ProviderApp() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [modulos, setModulos] = useState([]);
+  const [sessaoExpirada, limparSessaoExpirada] = useSessaoExpirada("provedor");
 
   useEffect(() => {
     Sessao.atual().then((p) => {
@@ -57,6 +59,15 @@ function ProviderApp() {
       setLoading(false);
     });
   }, []);
+
+  // Token venceu no meio do uso (uma requisição voltou 401) — desloga na
+  // hora em vez de deixar a tela parada como se ainda estivesse logado.
+  useEffect(() => {
+    if (sessaoExpirada) {
+      setProvedor(null);
+      setModulos([]);
+    }
+  }, [sessaoExpirada]);
 
   useEffect(() => {
     if (!provedor) return;
@@ -74,12 +85,14 @@ function ProviderApp() {
   }, [provedor]);
 
   const handleLogin = (p) => {
+    limparSessaoExpirada();
     setProvedor(p);
     setActiveTab("dashboard");
   };
 
   const handleLogout = () => {
     Sessao.sair();
+    limparSessaoExpirada();
     setProvedor(null);
     setModulos([]);
     setActiveTab("dashboard");
@@ -100,7 +113,7 @@ function ProviderApp() {
   if (!provedor) {
     return (
       <ToastProvider>
-        <LoginPage onLogin={handleLogin} />
+        <LoginPage onLogin={handleLogin} mensagem={sessaoExpirada ? "Sessão expirada. Faça login novamente." : null} />
       </ToastProvider>
     );
   }

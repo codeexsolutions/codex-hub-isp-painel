@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastProvider } from "./components/Toast";
 import { Parceiro } from "./services/store";
+import { useSessaoExpirada } from "./hooks/useSessaoExpirada";
 import PainelShell from "./components/PainelShell";
 import ParceiroLoginPage from "./pages/parceiro/ParceiroLoginPage";
 import ParceiroFinanceiroPage from "./pages/parceiro/ParceiroFinanceiroPage";
@@ -16,9 +17,15 @@ const ABAS = [
 export default function ParceiroApp() {
   const [logado, setLogado] = useState(() => !!Parceiro.atual());
   const [aba, setAba] = useState("ofertas");
+  const [sessaoExpirada, limparSessaoExpirada] = useSessaoExpirada("parceiro");
+
+  useEffect(() => {
+    if (sessaoExpirada) setLogado(false);
+  }, [sessaoExpirada]);
 
   const handleLogout = () => {
     Parceiro.sair();
+    limparSessaoExpirada();
     setLogado(false);
   };
 
@@ -31,7 +38,10 @@ export default function ParceiroApp() {
           {aba === "cupom" && <ParceiroCupomPage />}
         </PainelShell>
       ) : (
-        <ParceiroLoginPage onLogin={() => setLogado(true)} />
+        <ParceiroLoginPage
+          onLogin={() => { limparSessaoExpirada(); setLogado(true); }}
+          mensagem={sessaoExpirada ? "Sessão expirada. Faça login novamente." : null}
+        />
       )}
     </ToastProvider>
   );

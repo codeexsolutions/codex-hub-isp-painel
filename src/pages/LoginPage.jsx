@@ -4,7 +4,7 @@ import { Sessao, Provedores } from "../services/store";
 import { maskCnpj } from "../services/format";
 import { useToast } from "../components/Toast";
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, mensagem }) {
   const [mode, setMode] = useState("login");
   const toast = useToast();
   const logo = "/logo.png";
@@ -26,6 +26,12 @@ export default function LoginPage({ onLogin }) {
             </div>
           </div>
         </div>
+
+        {mensagem && (
+          <div className="mb-4 text-xs text-warning bg-warning/10 border border-warning/20 rounded-xl px-3 py-2.5 text-center">
+            {mensagem}
+          </div>
+        )}
 
         <div className="bg-surface rounded-3xl border border-border p-6 space-y-5 shadow-soft">
           {mode === "login" ? (
