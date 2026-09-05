@@ -271,6 +271,27 @@ export const AtivacaoTv = {
   },
 };
 
+// DNS/servidor Xtream próprio do provedor pro app Synk TV — em branco usa
+// o padrão do admin (ver Iptv.controller.ts::ObterUrlPadraoDoProvedor).
+export const IptvDns = {
+  async obter() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/iptv-dns");
+      return extrairData(json)?.urlDns ?? "";
+    }
+    return "";
+  },
+  async definir(urlDns) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/iptv-dns", {
+        method: "PUT",
+        body: JSON.stringify({ urlDns }),
+      });
+      return extrairData(json)?.urlDns ?? "";
+    }
+  },
+};
+
 export const HomeConfig = {
   async obter() {
     if (CONFIG.USE_API) {
