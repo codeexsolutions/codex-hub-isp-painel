@@ -10,6 +10,7 @@ const MODULOS = [
   { key: "iptv", label: "IPTV Ao Vivo (app do assinante)" },
   { key: "app_tv", label: "App Synk TV" },
   { key: "planos_moveis", label: "Internet Móvel (planos de dados)" },
+  { key: "landpage", label: "Landing Page (página pública do provedor)" },
 ];
 
 export default function AdminModulosPage() {

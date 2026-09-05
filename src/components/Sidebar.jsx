@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X, CreditCard, Tv, Smartphone,
+  LayoutDashboard, Building2, Palette, Image, Tag, Receipt, Award, Gift, Star, Bell, LogOut, Menu, X, CreditCard, Tv, Smartphone, Globe,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -24,6 +24,10 @@ const NAV_MOVEL = [
   { key: "planos-moveis", icon: Smartphone, label: "Internet Móvel", requer: "planos_moveis" },
 ];
 
+const NAV_LP = [
+  { key: "landpage", icon: Globe, label: "Landing Page", requer: "landpage" },
+];
+
 const NAV_RESTO = [
   { key: "faturamento", icon: CreditCard, label: "Faturamento" },
   { key: "notificacoes", icon: Bell, label: "Notificações" },
@@ -31,14 +35,15 @@ const NAV_RESTO = [
   { key: "avaliacoes", icon: Star, label: "Avaliações" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios, temRecompensas, temAppTv, temPlanosMoveis }) {
+export default function Sidebar({ activeTab, onTabChange, providerName, onLogout, temBeneficios, temRecompensas, temAppTv, temPlanosMoveis, temLandpage }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const modulosAtivos = { beneficios: temBeneficios, recompensas: temRecompensas, app_tv: temAppTv, planos_moveis: temPlanosMoveis };
+  const modulosAtivos = { beneficios: temBeneficios, recompensas: temRecompensas, app_tv: temAppTv, planos_moveis: temPlanosMoveis, landpage: temLandpage };
   const NAV = [
     ...NAV_BASE,
     ...NAV_BENEFICIOS.filter((item) => modulosAtivos[item.requer]),
     ...NAV_TV.filter((item) => modulosAtivos[item.requer]),
     ...NAV_MOVEL.filter((item) => modulosAtivos[item.requer]),
+    ...NAV_LP.filter((item) => modulosAtivos[item.requer]),
     ...NAV_RESTO,
   ];
 

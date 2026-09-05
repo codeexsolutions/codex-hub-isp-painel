@@ -16,6 +16,7 @@ const TITULOS = {
   indicacoes: ["Indicações", "Clientes que indicaram novos assinantes pelo aplicativo"],
   avaliacoes: ["Avaliações", "Clientes que avaliaram o serviço"],
   "planos-moveis": ["Internet Móvel", "Planos de dados móvel que o cliente pode solicitar pelo app"],
+  "landpage": ["Landing Page", "Sua página pública com planos e um jeito rápido do cliente te chamar"],
 };
 
 const INTERVALO_POLL_MS = 30000;

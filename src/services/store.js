@@ -850,6 +850,43 @@ export const PlanosMoveis = {
   },
 };
 
+// Catálogo de internet fixa (fibra) — alimenta a Landing Page (módulo "landpage").
+export const PlanosInternet = {
+  async listar() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/planos-internet"); return extrairData(json) || []; }
+    return [];
+  },
+  async criar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/planos-internet", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async atualizar(id, dados) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/planos-internet/${id}`, { method: "PATCH", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async remover(id) {
+    if (CONFIG.USE_API) { await request(`/painel/provedor/planos-internet/${id}`, { method: "DELETE" }); }
+  },
+};
+
+// Config da Landing Page pública do provedor.
+export const LpConfig = {
+  async obter() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/lp-config"); return extrairData(json); }
+    return { ativa: false, headline: "", subheadline: "", cidade: "" };
+  },
+  async definir(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/lp-config", { method: "PUT", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+};
+
 // Ofertas são criadas pelo parceiro (ver objeto Parceiro) — o provedor só vê o
 // catálogo de todas as ofertas disponíveis e ativa/desativa pra própria base.
 export const Beneficios = {

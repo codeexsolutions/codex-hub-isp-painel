@@ -23,6 +23,7 @@ import IndicacoesTab from "./pages/IndicacoesTab";
 import AvaliacoesTab from "./pages/AvaliacoesTab";
 import AtivacaoTvTab from "./pages/AtivacaoTvTab";
 import PlanosMovelTab from "./pages/PlanosMovelTab";
+import LandingPageTab from "./pages/LandingPageTab";
 import AdminApp from "./AdminApp";
 import ParceiroApp from "./ParceiroApp";
 
@@ -122,6 +123,7 @@ function ProviderApp() {
   const temRecompensas = modulos.includes("recompensas");
   const temAppTv = modulos.includes("app_tv");
   const temPlanosMoveis = modulos.includes("planos_moveis");
+  const temLandpage = modulos.includes("landpage");
 
   const renderTab = () => {
     switch (activeTab) {
@@ -151,6 +153,8 @@ function ProviderApp() {
         return temAppTv ? <AtivacaoTvTab /> : null;
       case "planos-moveis":
         return temPlanosMoveis ? <PlanosMovelTab /> : null;
+      case "landpage":
+        return temLandpage ? <LandingPageTab /> : null;
       default:
         return null;
     }
@@ -168,6 +172,7 @@ function ProviderApp() {
           temRecompensas={temRecompensas}
           temAppTv={temAppTv}
           temPlanosMoveis={temPlanosMoveis}
+          temLandpage={temLandpage}
         />
 
         <main className="flex-1 flex flex-col min-w-0">

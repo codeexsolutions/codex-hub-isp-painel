@@ -13,6 +13,7 @@ const MODULOS = [
   { key: "app_tv", label: "App Synk TV" },
   { key: "iptv", label: "IPTV Ao Vivo (app do assinante)" },
   { key: "planos_moveis", label: "Internet Móvel (planos de dados)" },
+  { key: "landpage", label: "Landing Page (página pública do provedor)" },
 ];
 
 const FORM_VAZIO = { nome: "", valor_mensalidade: "", modulos: [], ordem: "" };
