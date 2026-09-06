@@ -39,7 +39,7 @@ export default function LandingPageTab() {
       });
       setCodigoProvedor(dados?.codigo_provedor_fk ?? null);
     } catch (err) {
-      toast(err.message || "Erro ao carregar a configuração da Landing Page");
+      toast(err.message || "Erro ao carregar a configuração da Vitrine de Planos");
     } finally {
       setCarregandoConfig(false);
     }
@@ -52,7 +52,7 @@ export default function LandingPageTab() {
     try {
       const salvo = await LpConfig.definir(config);
       setCodigoProvedor(salvo?.codigo_provedor_fk ?? codigoProvedor);
-      toast("Landing Page atualizada");
+      toast("Vitrine de Planos atualizada");
     } catch (err) {
       toast(err.message || "Erro ao salvar");
     } finally {
@@ -134,7 +134,7 @@ export default function LandingPageTab() {
       <div className="bg-surface rounded-2xl border border-border p-5 space-y-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="text-sm text-text font-display">Sua Landing Page</h3>
+            <h3 className="text-sm text-text font-display">Sua Vitrine de Planos</h3>
             <p className="text-xs text-text-dim mt-1 max-w-lg">
               Uma página pública com a sua marca, seus planos de internet e um jeito rápido do cliente
               te chamar. Headline e subtítulo têm um texto padrão pronto — só personalize se quiser.
@@ -147,7 +147,7 @@ export default function LandingPageTab() {
               rel="noreferrer"
               className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover transition-colors shrink-0"
             >
-              Ver minha Landing Page <ExternalLink size={13} />
+              Ver minha Vitrine de Planos <ExternalLink size={13} />
             </a>
           )}
         </div>
@@ -157,7 +157,7 @@ export default function LandingPageTab() {
         ) : (
           <div className="space-y-4">
             <div>
-              <Label>Landing Page</Label>
+              <Label>Vitrine de Planos</Label>
               <Select value={String(config.ativa)} onChange={(e) => setConfig((c) => ({ ...c, ativa: e.target.value === "true" }))}>
                 <option value="true">Ativa</option>
                 <option value="false">Desativada</option>
@@ -192,7 +192,7 @@ export default function LandingPageTab() {
         <div>
           <h3 className="text-sm text-text font-display">Planos de internet (fibra)</h3>
           <p className="text-xs text-text-dim mt-1 max-w-md">
-            Esses planos aparecem na sua Landing Page. Marque um como "Destaque" pra chamar mais atenção.
+            Esses planos aparecem na sua Vitrine de Planos. Marque um como "Destaque" pra chamar mais atenção.
           </p>
         </div>
         <button

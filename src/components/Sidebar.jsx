@@ -25,7 +25,7 @@ const NAV_MOVEL = [
 ];
 
 const NAV_LP = [
-  { key: "landpage", icon: Globe, label: "Landing Page", requer: "landpage" },
+  { key: "landpage", icon: Globe, label: "Vitrine de Planos", requer: "landpage" },
 ];
 
 const NAV_RESTO = [
