@@ -873,6 +873,52 @@ export const PlanosInternet = {
   },
 };
 
+// "Por que assinar" (vantagens) da Landing Page.
+export const LpVantagens = {
+  async listar() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/lp-vantagens"); return extrairData(json) || []; }
+    return [];
+  },
+  async criar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/lp-vantagens", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async atualizar(id, dados) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/lp-vantagens/${id}`, { method: "PATCH", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async remover(id) {
+    if (CONFIG.USE_API) { await request(`/painel/provedor/lp-vantagens/${id}`, { method: "DELETE" }); }
+  },
+};
+
+// "Apps inclusos" da Landing Page.
+export const LpApps = {
+  async listar() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/lp-apps"); return extrairData(json) || []; }
+    return [];
+  },
+  async criar(dados) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/lp-apps", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async atualizar(id, dados) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/lp-apps/${id}`, { method: "PATCH", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  async remover(id) {
+    if (CONFIG.USE_API) { await request(`/painel/provedor/lp-apps/${id}`, { method: "DELETE" }); }
+  },
+};
+
 // Config da Landing Page pública do provedor.
 export const LpConfig = {
   async obter() {
