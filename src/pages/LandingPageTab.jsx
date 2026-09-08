@@ -12,7 +12,10 @@ export default function LandingPageTab() {
   const toast = useToast();
 
   // Config da LP
-  const [config, setConfig] = useState({ ativa: false, headline: "", subheadline: "", cidade: "" });
+  const [config, setConfig] = useState({
+    ativa: false, headline: "", subheadline: "", cidade: "", endereco: "",
+    notaGoogle: "", qtdAvaliacoesGoogle: "", linkGoogle: "",
+  });
   const [codigoProvedor, setCodigoProvedor] = useState(null);
   const [carregandoConfig, setCarregandoConfig] = useState(true);
   const [salvandoConfig, setSalvandoConfig] = useState(false);
@@ -36,6 +39,10 @@ export default function LandingPageTab() {
         headline: dados?.headline || "",
         subheadline: dados?.subheadline || "",
         cidade: dados?.cidade || "",
+        endereco: dados?.endereco || "",
+        notaGoogle: dados?.nota_google != null ? String(dados.nota_google) : "",
+        qtdAvaliacoesGoogle: dados?.qtd_avaliacoes_google != null ? String(dados.qtd_avaliacoes_google) : "",
+        linkGoogle: dados?.link_google || "",
       });
       setCodigoProvedor(dados?.codigo_provedor_fk ?? null);
     } catch (err) {
@@ -175,6 +182,31 @@ export default function LandingPageTab() {
               <Label>Cidade (opcional)</Label>
               <Input value={config.cidade} onChange={setConfigCampo("cidade")} placeholder="ex.: Fortaleza - CE" />
             </div>
+            <div>
+              <Label>Endereço (opcional, aparece no rodapé)</Label>
+              <Input value={config.endereco} onChange={setConfigCampo("endereco")} placeholder="ex.: Av. Principal, 123 - Centro" />
+            </div>
+
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs text-text-dim mb-3">
+                Prova social (opcional) — se preencher a nota, a Vitrine mostra um selo com sua avaliação do Google.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Nota no Google (0 a 5)</Label>
+                  <Input value={config.notaGoogle} onChange={setConfigCampo("notaGoogle")} inputMode="decimal" placeholder="ex.: 4.8" />
+                </div>
+                <div>
+                  <Label>Quantidade de avaliações</Label>
+                  <Input value={config.qtdAvaliacoesGoogle} onChange={setConfigCampo("qtdAvaliacoesGoogle")} inputMode="numeric" placeholder="ex.: 320" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <Label>Link do seu perfil no Google (opcional)</Label>
+                <Input value={config.linkGoogle} onChange={setConfigCampo("linkGoogle")} placeholder="https://g.page/..." />
+              </div>
+            </div>
+
             <div className="flex justify-end">
               <button
                 onClick={salvarConfig}
