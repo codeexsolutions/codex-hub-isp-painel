@@ -485,7 +485,11 @@ export const Admin = {
   },
   async _request(path, options = {}) {
     const token = localStorage.getItem(ADMIN_TOKEN_KEY);
-    const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) };
+    const headers = {
+      ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    };
     const res = await fetch(`${CONFIG.API_BASE}${path}`, { ...options, headers });
     const texto = await res.text();
     let json = null;
@@ -513,6 +517,24 @@ export const Admin = {
     const json = await this._request(`/painel/admin/provedores/${codigoProvedor}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
+    });
+    return extrairData(json);
+  },
+  // Onboarding rápido — deixa um provedor novo pronto (tema + atendimento +
+  // planos + Vitrine + módulos) sem o provedor precisar configurar sozinho.
+  async atualizarTema(codigoProvedor, { accent, accent2, nomeFantasia, logoFile }) {
+    const form = new FormData();
+    form.append("accent", accent || "");
+    form.append("accent2", accent2 || "");
+    form.append("nome_fantasia", nomeFantasia || "");
+    if (logoFile) form.append("logo", logoFile);
+    const json = await this._request(`/painel/admin/provedores/${codigoProvedor}/temas`, { method: "PUT", body: form });
+    return extrairData(json);
+  },
+  async onboardingRapido(codigoProvedor, dados) {
+    const json = await this._request(`/painel/admin/provedores/${codigoProvedor}/onboarding-rapido`, {
+      method: "POST",
+      body: JSON.stringify(dados),
     });
     return extrairData(json);
   },

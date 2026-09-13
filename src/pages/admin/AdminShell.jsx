@@ -1,6 +1,7 @@
 import PainelShell from "../../components/PainelShell";
 
 const ABAS = [
+  { key: "onboarding", label: "Onboarding rápido" },
   { key: "provedores", label: "Provedores" },
   { key: "comissao", label: "Comissão" },
   { key: "pontos", label: "Pontos" },
