@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Rocket, Plus, Trash2 } from "lucide-react";
+import { Rocket, Plus, Trash2, Copy, CheckCircle2 } from "lucide-react";
 import { Admin } from "../../services/store";
 import { Label, Input, Select, ColorField } from "../../components/Field";
 import { useToast } from "../../components/Toast";
+
+const APP_URL = "https://app.synkisp.com.br";
+const PAINEL_URL = "https://painel.synkisp.com.br";
+const LP_BASE_URL = "https://synkisp.com.br/p";
 
 const MODULOS = [
   { key: "beneficios", label: "Benefícios" },
@@ -45,6 +49,8 @@ export default function AdminOnboardingPage() {
   const [endereco, setEndereco] = useState("");
   const [planos, setPlanos] = useState([novoPlano()]);
   const [modulosSelecionados, setModulosSelecionados] = useState(["beneficios", "landpage"]);
+  const [mensagemPronta, setMensagemPronta] = useState("");
+  const [copiado, setCopiado] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -72,9 +78,34 @@ export default function AdminOnboardingPage() {
   const adicionarPlano = () => setPlanos((atual) => [...atual, novoPlano()]);
   const removerPlano = (idx) => setPlanos((atual) => atual.filter((_, i) => i !== idx));
 
+  const montarMensagem = () => {
+    const nome = provedorAtual?.nome_fantasia || provedorAtual?.empresa || "";
+    const linhas = [
+      `Olá${nome ? " " + nome : ""}! 🎉 Seu app já está pronto com a marca de vocês.`,
+      "",
+      `📱 App do assinante: ${APP_URL} (código do provedor: ${codigoSelecionado})`,
+    ];
+    if (modulosSelecionados.includes("landpage")) {
+      linhas.push(`🌐 Sua página pra divulgar: ${LP_BASE_URL}/${codigoSelecionado}`);
+    }
+    linhas.push(`🖥️ Painel de gestão: ${PAINEL_URL}`, "", "Qualquer dúvida, me chama por aqui!");
+    return linhas.join("\n");
+  };
+
+  const copiarMensagem = async () => {
+    try {
+      await navigator.clipboard.writeText(mensagemPronta);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      toast("Não foi possível copiar. Selecione o texto manualmente.");
+    }
+  };
+
   const salvar = async () => {
     if (!codigoSelecionado) { toast("Selecione o provedor"); return; }
 
+    setMensagemPronta("");
     setSalvando(true);
     try {
       // Tema só é enviado se algo foi preenchido — não sobrescreve com vazio
@@ -105,7 +136,8 @@ export default function AdminOnboardingPage() {
         modulos: modulosSelecionados,
       });
 
-      toast("Provedor configurado! Já pode mandar o link pronto pra ele.");
+      toast("Provedor configurado!");
+      setMensagemPronta(montarMensagem());
       await load();
     } catch (err) {
       toast(err.message || "Erro ao configurar o provedor");
@@ -289,6 +321,23 @@ export default function AdminOnboardingPage() {
               {salvando ? "Configurando…" : "Salvar e ativar tudo"}
             </button>
           </div>
+
+          {mensagemPronta && (
+            <div className="bg-surface rounded-2xl border border-accent/30 p-5 space-y-3">
+              <h3 className="text-sm text-text font-display">Mensagem pronta pro WhatsApp</h3>
+              <p className="text-xs text-text-dim">Copie e mande direto pro provedor — já com os links certos.</p>
+              <pre className="whitespace-pre-wrap text-xs text-text-sub bg-surface-2 rounded-xl p-4 border border-border font-sans">
+                {mensagemPronta}
+              </pre>
+              <button
+                onClick={copiarMensagem}
+                className="px-4 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors flex items-center gap-1.5"
+              >
+                {copiado ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                {copiado ? "Copiado!" : "Copiar mensagem"}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
