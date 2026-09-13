@@ -522,12 +522,16 @@ export const Admin = {
   },
   // Onboarding rápido — deixa um provedor novo pronto (tema + atendimento +
   // planos + Vitrine + módulos) sem o provedor precisar configurar sozinho.
-  async atualizarTema(codigoProvedor, { accent, accent2, nomeFantasia, logoFile }) {
+  async atualizarTema(codigoProvedor, { accent, accent2, nomeFantasia, logoFile, faviconFile, icon192File, icon512File, maskableFile }) {
     const form = new FormData();
     form.append("accent", accent || "");
     form.append("accent2", accent2 || "");
     form.append("nome_fantasia", nomeFantasia || "");
     if (logoFile) form.append("logo", logoFile);
+    if (faviconFile) form.append("favicon", faviconFile);
+    if (icon192File) form.append("icon192", icon192File);
+    if (icon512File) form.append("icon512", icon512File);
+    if (maskableFile) form.append("maskable", maskableFile);
     const json = await this._request(`/painel/admin/provedores/${codigoProvedor}/temas`, { method: "PUT", body: form });
     return extrairData(json);
   },

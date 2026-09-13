@@ -35,6 +35,10 @@ export default function AdminOnboardingPage() {
   const [accent2, setAccent2] = useState("#7C3AED");
   const [nomeFantasia, setNomeFantasia] = useState("");
   const [logoFile, setLogoFile] = useState(null);
+  const [faviconFile, setFaviconFile] = useState(null);
+  const [icon192File, setIcon192File] = useState(null);
+  const [icon512File, setIcon512File] = useState(null);
+  const [maskableFile, setMaskableFile] = useState(null);
   const [whatsapp, setWhatsapp] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cidade, setCidade] = useState("");
@@ -75,8 +79,11 @@ export default function AdminOnboardingPage() {
     try {
       // Tema só é enviado se algo foi preenchido — não sobrescreve com vazio
       // um tema que o provedor já tenha configurado sozinho antes.
-      if (accent || accent2 || nomeFantasia.trim() || logoFile) {
-        await Admin.atualizarTema(codigoSelecionado, { accent, accent2, nomeFantasia: nomeFantasia.trim(), logoFile });
+      if (accent || accent2 || nomeFantasia.trim() || logoFile || faviconFile || icon192File || icon512File || maskableFile) {
+        await Admin.atualizarTema(codigoSelecionado, {
+          accent, accent2, nomeFantasia: nomeFantasia.trim(),
+          logoFile, faviconFile, icon192File, icon512File, maskableFile,
+        });
       }
 
       const planosValidos = planos
@@ -157,7 +164,30 @@ export default function AdminOnboardingPage() {
             </div>
             <div>
               <Label>Logo (opcional)</Label>
-              <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+            </div>
+
+            <p className="text-[11px] text-text-dim pt-2 border-t border-border">
+              Ícones do PWA (obrigatórios pro app instalar direito no celular do assinante) — favicon, 192px e 512px.
+              O maskable (Android, com margem de segurança) é opcional.
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>Favicon</Label>
+                <input type="file" accept="image/png,image/x-icon,image/svg+xml" onChange={(e) => setFaviconFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+              </div>
+              <div>
+                <Label>Ícone 192px</Label>
+                <input type="file" accept="image/png" onChange={(e) => setIcon192File(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+              </div>
+              <div>
+                <Label>Ícone 512px</Label>
+                <input type="file" accept="image/png" onChange={(e) => setIcon512File(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+              </div>
+            </div>
+            <div>
+              <Label>Ícone maskable (opcional, Android)</Label>
+              <input type="file" accept="image/png" onChange={(e) => setMaskableFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
             </div>
           </div>
 
