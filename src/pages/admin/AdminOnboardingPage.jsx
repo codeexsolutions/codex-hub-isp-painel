@@ -164,30 +164,43 @@ export default function AdminOnboardingPage() {
             </div>
             <div>
               <Label>Logo (opcional)</Label>
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                className="w-full text-xs text-text-sub file:mr-3 file:py-2 file:px-4 file:rounded-lg
+                  file:border file:border-border file:bg-surface-2 file:text-text-sub file:text-xs
+                  file:cursor-pointer hover:file:bg-surface-3 transition-colors" />
             </div>
 
             <p className="text-[11px] text-text-dim pt-2 border-t border-border">
               Ícones do PWA (obrigatórios pro app instalar direito no celular do assinante) — favicon, 192px e 512px.
               O maskable (Android, com margem de segurança) é opcional.
             </p>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Favicon</Label>
-                <input type="file" accept="image/png,image/x-icon,image/svg+xml" onChange={(e) => setFaviconFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
-              </div>
-              <div>
-                <Label>Ícone 192px</Label>
-                <input type="file" accept="image/png" onChange={(e) => setIcon192File(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
-              </div>
-              <div>
-                <Label>Ícone 512px</Label>
-                <input type="file" accept="image/png" onChange={(e) => setIcon512File(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
-              </div>
+            <div>
+              <Label>Favicon</Label>
+              <input type="file" accept="image/png,image/x-icon,image/svg+xml" onChange={(e) => setFaviconFile(e.target.files?.[0] || null)}
+                className="w-full text-xs text-text-sub file:mr-3 file:py-2 file:px-4 file:rounded-lg
+                  file:border file:border-border file:bg-surface-2 file:text-text-sub file:text-xs
+                  file:cursor-pointer hover:file:bg-surface-3 transition-colors" />
+            </div>
+            <div>
+              <Label>Ícone 192px</Label>
+              <input type="file" accept="image/png" onChange={(e) => setIcon192File(e.target.files?.[0] || null)}
+                className="w-full text-xs text-text-sub file:mr-3 file:py-2 file:px-4 file:rounded-lg
+                  file:border file:border-border file:bg-surface-2 file:text-text-sub file:text-xs
+                  file:cursor-pointer hover:file:bg-surface-3 transition-colors" />
+            </div>
+            <div>
+              <Label>Ícone 512px</Label>
+              <input type="file" accept="image/png" onChange={(e) => setIcon512File(e.target.files?.[0] || null)}
+                className="w-full text-xs text-text-sub file:mr-3 file:py-2 file:px-4 file:rounded-lg
+                  file:border file:border-border file:bg-surface-2 file:text-text-sub file:text-xs
+                  file:cursor-pointer hover:file:bg-surface-3 transition-colors" />
             </div>
             <div>
               <Label>Ícone maskable (opcional, Android)</Label>
-              <input type="file" accept="image/png" onChange={(e) => setMaskableFile(e.target.files?.[0] || null)} className="text-xs text-text-sub" />
+              <input type="file" accept="image/png" onChange={(e) => setMaskableFile(e.target.files?.[0] || null)}
+                className="w-full text-xs text-text-sub file:mr-3 file:py-2 file:px-4 file:rounded-lg
+                  file:border file:border-border file:bg-surface-2 file:text-text-sub file:text-xs
+                  file:cursor-pointer hover:file:bg-surface-3 transition-colors" />
             </div>
           </div>
 
