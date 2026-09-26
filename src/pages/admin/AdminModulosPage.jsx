@@ -12,6 +12,7 @@ const MODULOS = [
   { key: "planos_moveis", label: "Internet Móvel (planos de dados)" },
   { key: "landpage", label: "Vitrine de Planos (página pública do provedor)" },
   { key: "ia_suporte", label: "Sugestão de IA antes de abrir chamado" },
+  { key: "autoatendimento_ixc", label: "Autoatendimento IXC (editar perfil, reiniciar roteador, WiFi)" },
 ];
 
 export default function AdminModulosPage() {

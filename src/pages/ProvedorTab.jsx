@@ -17,6 +17,9 @@ export default function ProvedorTab({ provedor, onUpdate }) {
   const [contratoConfig, setContratoConfig] = useState({ resource_imprimir: "" });
   const [savingContratoConfig, setSavingContratoConfig] = useState(false);
 
+  const [resourceRebootOnu, setResourceRebootOnu] = useState("");
+  const [savingRebootOnu, setSavingRebootOnu] = useState(false);
+
   const [assuntos, setAssuntos] = useState([]);
   const [novoAssunto, setNovoAssunto] = useState({ nome: "", id_assunto_ixc: "" });
   const [salvandoAssunto, setSalvandoAssunto] = useState(false);
@@ -68,6 +71,8 @@ export default function ProvedorTab({ provedor, onUpdate }) {
       gerenciador: provedor.gerenciador || "RECEITANET",
       codigo_api_gerenciador: provedor.codigo_api_gerenciador ?? "",
       dominio_ixc: provedor.dominio_ixc || "",
+      dominio_mkauth: provedor.dominio_mkauth || "",
+      mkauth_client_id: provedor.mkauth_client_id || "",
       chave_api_gerenciador: provedor.chave_api_gerenciador || "",
     });
   }, [provedor]);
@@ -97,7 +102,10 @@ export default function ProvedorTab({ provedor, onUpdate }) {
 
   useEffect(() => {
     IxcContratoConfig.obter()
-      .then((c) => setContratoConfig({ resource_imprimir: c?.resource_imprimir ?? "" }))
+      .then((c) => {
+        setContratoConfig({ resource_imprimir: c?.resource_imprimir ?? "" });
+        setResourceRebootOnu(c?.resource_reboot_onu ?? "");
+      })
       .catch(() => {});
   }, []);
 
@@ -117,6 +125,22 @@ export default function ProvedorTab({ provedor, onUpdate }) {
     }
   };
 
+  const salvarRebootOnuConfig = async () => {
+    if (!resourceRebootOnu.trim()) {
+      toast("Informe o recurso do botão Reboot ONU");
+      return;
+    }
+    setSavingRebootOnu(true);
+    try {
+      await IxcContratoConfig.salvarRebootOnu(resourceRebootOnu.trim());
+      toast("Configuração de reiniciar roteador salva");
+    } catch (err) {
+      toast(err.message || "Erro ao salvar");
+    } finally {
+      setSavingRebootOnu(false);
+    }
+  };
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const salvar = async () => {
@@ -133,6 +157,8 @@ export default function ProvedorTab({ provedor, onUpdate }) {
         gerenciador: form.gerenciador,
         codigo_api_gerenciador: form.codigo_api_gerenciador ? Number(form.codigo_api_gerenciador) : null,
         dominio_ixc: form.dominio_ixc || null,
+        dominio_mkauth: form.dominio_mkauth || null,
+        mkauth_client_id: form.mkauth_client_id || null,
         chave_api_gerenciador: form.chave_api_gerenciador || null,
       };
       const updated = await Provedores.atualizar(provedor.id, patch);
@@ -223,23 +249,42 @@ export default function ProvedorTab({ provedor, onUpdate }) {
             <Select value={form.gerenciador || "RECEITANET"} onChange={set("gerenciador")}>
               <option value="RECEITANET">RECEITANET</option>
               <option value="IXCSOFT">IXCSOFT</option>
+              <option value="MKAUTH">MK-AUTH</option>
             </Select>
+            {form.gerenciador === "MKAUTH" && (
+              <Help>Integração com MK-Auth ainda em preparação — os dados aqui já ficam salvos, prontos pra quando a integração for concluída.</Help>
+            )}
           </div>
 
           <FieldRow>
-            <div>
-              <Label>Código API gerenciador</Label>
-              <Input value={form.codigo_api_gerenciador || ""} onChange={set("codigo_api_gerenciador")} placeholder="ex.: 128" inputMode="numeric" />
-            </div>
-            <div>
-              <Label>Domínio IXC</Label>
-              <Input value={form.dominio_ixc || ""} onChange={set("dominio_ixc")} placeholder="ex.: suaempresa.ixcsoft.com.br" />
-              <Help>Caso gerenciador seja IXCSOFT</Help>
-            </div>
+            {form.gerenciador === "MKAUTH" ? (
+              <div>
+                <Label>Client ID (MK-Auth)</Label>
+                <Input value={form.mkauth_client_id || ""} onChange={set("mkauth_client_id")} placeholder="ex.: Client_Id_662eaa47..." />
+              </div>
+            ) : (
+              <div>
+                <Label>Código API gerenciador</Label>
+                <Input value={form.codigo_api_gerenciador || ""} onChange={set("codigo_api_gerenciador")} placeholder="ex.: 128" inputMode="numeric" />
+              </div>
+            )}
+            {form.gerenciador === "MKAUTH" ? (
+              <div>
+                <Label>Domínio MK-Auth</Label>
+                <Input value={form.dominio_mkauth || ""} onChange={set("dominio_mkauth")} placeholder="ex.: 192.168.88.2 ou painel.suaempresa.com.br" />
+                <Help>Precisa de HTTPS com certificado válido</Help>
+              </div>
+            ) : (
+              <div>
+                <Label>Domínio IXC</Label>
+                <Input value={form.dominio_ixc || ""} onChange={set("dominio_ixc")} placeholder="ex.: suaempresa.ixcsoft.com.br" />
+                <Help>Caso gerenciador seja IXCSOFT</Help>
+              </div>
+            )}
           </FieldRow>
 
           <div>
-            <Label>Chave API gerenciador</Label>
+            <Label>{form.gerenciador === "MKAUTH" ? "Client Secret (MK-Auth)" : "Chave API gerenciador"}</Label>
             <div className="relative">
               <Input
                 value={form.chave_api_gerenciador || ""}
@@ -255,7 +300,11 @@ export default function ProvedorTab({ provedor, onUpdate }) {
                 {showChave ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <Help>Usada para o app buscar faturas, consumo e dados cadastrais do cliente.</Help>
+            <Help>
+              {form.gerenciador === "MKAUTH"
+                ? "Gerado em CADASTROS > Controle de usuários > (usuário) > API, no painel MK-Auth."
+                : "Usada para o app buscar faturas, consumo e dados cadastrais do cliente."}
+            </Help>
           </div>
         </div>
       </div>
@@ -398,6 +447,40 @@ export default function ProvedorTab({ provedor, onUpdate }) {
                 hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
             >
               {savingContratoConfig ? "Salvando…" : "Salvar configuração de contrato"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {form.gerenciador === "IXCSOFT" && (
+        <div className="bg-surface rounded-2xl border border-border p-5 space-y-4 max-w-2xl">
+          <div>
+            <h3 className="text-sm text-text font-display">Reiniciar roteador (IXC)</h3>
+            <p className="text-xs text-text-dim mt-1">
+              Recurso do botão "Reboot ONU" do seu IXC (Sistema {'>'} Provedor {'>'} Cliente Fibra (ONU) {'>'} Botões {'>'}
+              Integração ONU {'>'} Reboot ONU). O nome muda por instalação, ex.: radpop_radio_cliente_fibra_26379. Sem
+              isso preenchido, "Reiniciar roteador" fica indisponível pros seus clientes. Só funciona pra contratos com
+              ONU cadastrada no módulo de fibra do IXC.
+            </p>
+          </div>
+
+          <div>
+            <Label>Recurso do botão Reboot ONU</Label>
+            <Input
+              value={resourceRebootOnu}
+              onChange={(e) => setResourceRebootOnu(e.target.value)}
+              placeholder="ex.: radpop_radio_cliente_fibra_26379"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={salvarRebootOnuConfig}
+              disabled={savingRebootOnu}
+              className="px-6 py-2.5 rounded-xl bg-accent text-white text-sm
+                hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+            >
+              {savingRebootOnu ? "Salvando…" : "Salvar configuração de reiniciar roteador"}
             </button>
           </div>
         </div>

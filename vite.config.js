@@ -29,4 +29,8 @@ export default defineConfig({
   define: {
     __APP_BUILD_ID__: JSON.stringify(buildId),
   },
+  // Porta própria e travada (strictPort) — mesmo motivo do synk-app: sem
+  // porta fixa, o Vite escolhe outra silenciosamente quando a padrão (5173)
+  // já está ocupada por outro projeto, e fica fácil abrir o projeto errado.
+  server: { port: 5184, strictPort: true, host: true },
 });

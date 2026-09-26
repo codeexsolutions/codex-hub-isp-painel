@@ -87,6 +87,8 @@ function normalizarProvedor(raw) {
     nome_administrador: raw.NomeAdministrador,
     cnpj: raw.CpfCnpj,
     dominio_ixc: raw.DominioIxc ?? null,
+    dominio_mkauth: raw.DominioMkAuth ?? null,
+    mkauth_client_id: raw.MkAuthClientId ?? null,
     usuario: raw.Usuario,
     senha: raw._Senha,
   };
@@ -400,6 +402,17 @@ export const IxcContratoConfig = {
       return extrairData(json);
     }
     return dados;
+  },
+
+  async salvarRebootOnu(resource_reboot_onu) {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc-reboot-onu-config", {
+        method: "PUT",
+        body: JSON.stringify({ resource_reboot_onu }),
+      });
+      return extrairData(json);
+    }
+    return { resource_reboot_onu };
   },
 };
 
@@ -896,6 +909,16 @@ export const PlanosInternet = {
   },
   async remover(id) {
     if (CONFIG.USE_API) { await request(`/painel/provedor/planos-internet/${id}`, { method: "DELETE" }); }
+  },
+  async listarSolicitacoes() {
+    if (CONFIG.USE_API) { const json = await request("/painel/provedor/planos-internet/solicitacoes"); return extrairData(json) || []; }
+    return [];
+  },
+  async atualizarStatusSolicitacao(id, status) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/planos-internet/solicitacoes/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      return extrairData(json);
+    }
   },
 };
 
