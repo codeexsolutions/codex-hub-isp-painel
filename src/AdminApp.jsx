@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ToastProvider } from "./components/Toast";
 import { Admin } from "./services/store";
 import { useSessaoExpirada } from "./hooks/useSessaoExpirada";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminShell from "./pages/admin/AdminShell";
 import AdminModulosPage from "./pages/admin/AdminModulosPage";
@@ -19,6 +20,8 @@ export default function AdminApp() {
   const [logado, setLogado] = useState(() => !!Admin.atual());
   const [aba, setAba] = useState("onboarding");
   const [sessaoExpirada, limparSessaoExpirada] = useSessaoExpirada("admin");
+
+  useDocumentTitle("Synk ISP · Admin");
 
   useEffect(() => {
     if (sessaoExpirada) setLogado(false);

@@ -180,16 +180,27 @@ export default function ParceiroOfertasPage() {
             <Label>Imagem da oferta</Label>
             <div className="space-y-2">
               {previewUrl ? (
-                <div className="relative rounded-xl overflow-hidden border border-border w-40 mx-auto">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="relative rounded-xl overflow-hidden border border-border w-40 mx-auto block group cursor-pointer"
+                  title="Clique para trocar a imagem"
+                >
                   <img src={previewUrl} alt="preview" className="w-full aspect-square object-cover" onError={(e) => { e.target.style.display = "none"; }} />
-                  <button
-                    onClick={clearFile}
+                  <div className="absolute inset-0 bg-canvas/0 group-hover:bg-canvas/40 transition-colors flex items-center justify-center">
+                    <Upload size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); clearFile(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); clearFile(); } }}
                     className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-canvas/80 backdrop-blur-sm border border-border
                       flex items-center justify-center text-text-sub hover:text-danger transition-colors"
                   >
                     <X size={14} />
-                  </button>
-                </div>
+                  </span>
+                </button>
               ) : (
                 <button
                   type="button"
@@ -211,6 +222,7 @@ export default function ParceiroOfertasPage() {
                 className="hidden"
               />
               <Help>
+                {previewUrl ? "Clique na imagem para trocar por outra. " : ""}
                 Tamanho recomendado: <strong>1080 × 1080px (quadrada)</strong>. O sistema recorta
                 automaticamente pra esse formato — prefira já enviar uma foto quadrada.
               </Help>

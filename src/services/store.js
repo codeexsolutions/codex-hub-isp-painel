@@ -792,6 +792,19 @@ export const Parceiro = {
     const json = await this._request(`/parceiros/cupom/${encodeURIComponent(codigo)}/cancelar`, { method: "PATCH" });
     return extrairData(json);
   },
+  // PERFIL
+  async obterPerfil() {
+    const json = await this._request("/parceiros/perfil");
+    return extrairData(json);
+  },
+  async atualizarPerfil(dados) {
+    const json = await this._request("/parceiros/perfil", { method: "PATCH", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
+  async alterarSenha(senhaAtual, senhaNova) {
+    const json = await this._request("/parceiros/perfil/senha", { method: "PATCH", body: JSON.stringify({ senhaAtual, senhaNova }) });
+    return extrairData(json);
+  },
   // OFERTAS — o parceiro cria/gerencia; o provedor só ativa (ver Beneficios.catalogo/ativar)
   async listarOfertas() {
     const json = await this._request("/parceiros/ofertas");

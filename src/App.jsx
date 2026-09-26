@@ -26,6 +26,7 @@ import PlanosMovelTab from "./pages/PlanosMovelTab";
 import LandingPageTab from "./pages/LandingPageTab";
 import AdminApp from "./AdminApp";
 import ParceiroApp from "./ParceiroApp";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 export default function App() {
   const atualizacaoDisponivel = useAppUpdateWatcher();
@@ -53,6 +54,8 @@ function ProviderApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [modulos, setModulos] = useState([]);
   const [sessaoExpirada, limparSessaoExpirada] = useSessaoExpirada("provedor");
+
+  useDocumentTitle(provedor ? `${provedor.nome_fantasia || provedor.empresa} · Synk ISP` : "Synk ISP · Painel do Provedor");
 
   useEffect(() => {
     Sessao.atual().then((p) => {
