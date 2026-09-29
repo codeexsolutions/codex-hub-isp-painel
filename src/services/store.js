@@ -698,6 +698,10 @@ export const Admin = {
     const json = await this._request(`/painel/admin/licencas-tv/${id}/cancelar`, { method: "PATCH" });
     return extrairData(json);
   },
+  async definirLinkPagamentoListaLicencaTv(id, link) {
+    const json = await this._request(`/painel/admin/licencas-tv/${id}/link-lista`, { method: "PATCH", body: JSON.stringify({ link }) });
+    return extrairData(json);
+  },
   async listarPlanos() {
     const json = await this._request("/painel/admin/planos");
     return extrairData(json) || [];

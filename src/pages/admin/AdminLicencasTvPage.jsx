@@ -32,6 +32,8 @@ export default function AdminLicencasTvPage() {
   const [licencas, setLicencas] = useState([]);
   const [loadingLicencas, setLoadingLicencas] = useState(true);
   const [salvandoId, setSalvandoId] = useState(null);
+  const [linkEditando, setLinkEditando] = useState({});
+  const [salvandoLinkId, setSalvandoLinkId] = useState(null);
 
   const [criarNome, setCriarNome] = useState("");
   const [criarTelefone, setCriarTelefone] = useState("");
@@ -116,6 +118,20 @@ export default function AdminLicencasTvPage() {
       toast(err.message || "Erro ao criar licença");
     } finally {
       setCriando(false);
+    }
+  };
+
+  const salvarLinkLista = async (item) => {
+    const link = (linkEditando[item.id] ?? item.link_pagamento_lista ?? "").trim();
+    setSalvandoLinkId(item.id);
+    try {
+      await Admin.definirLinkPagamentoListaLicencaTv(item.id, link);
+      await loadLicencas();
+      toast("Link de renovação da lista salvo");
+    } catch (err) {
+      toast(err.message || "Erro ao salvar link");
+    } finally {
+      setSalvandoLinkId(null);
     }
   };
 
@@ -227,12 +243,15 @@ export default function AdminLicencasTvPage() {
                   <th className="px-4 py-3 font-normal">Valor</th>
                   <th className="px-4 py-3 font-normal">Vencimento</th>
                   <th className="px-4 py-3 font-normal">Status</th>
+                  <th className="px-4 py-3 font-normal">Link renovação da lista (Mercado Pago)</th>
                   <th className="px-4 py-3 font-normal"></th>
                 </tr>
               </thead>
               <tbody>
                 {licencas.map((item) => {
                   const salvando = salvandoId === item.id;
+                  const salvandoLink = salvandoLinkId === item.id;
+                  const linkAtual = linkEditando[item.id] ?? item.link_pagamento_lista ?? "";
                   return (
                     <tr key={item.id} className="border-b border-border last:border-0 hover:bg-surface-2/50 transition-colors">
                       <td className="px-4 py-3 text-text">{item.nome}</td>
@@ -244,6 +263,23 @@ export default function AdminLicencasTvPage() {
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${COR_STATUS[item.status]}`}>
                           {LABEL_STATUS[item.status]}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 min-w-[220px]">
+                          <Input
+                            value={linkAtual}
+                            onChange={(e) => setLinkEditando((m) => ({ ...m, [item.id]: e.target.value }))}
+                            placeholder="https://mpago.la/..."
+                            className="text-xs"
+                          />
+                          <button
+                            onClick={() => salvarLinkLista(item)}
+                            disabled={salvandoLink}
+                            className="text-[11px] px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {salvandoLink ? "..." : "Salvar"}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {(item.status === "pendente" || item.status === "teste") && (
