@@ -824,6 +824,30 @@ export const Parceiro = {
   },
 };
 
+// Central de notificações do painel do PARCEIRO (sino) — separada da
+// NotificacoesPainel (provedor); usa a autenticação do parceiro.
+export const NotificacoesParceiro = {
+  async inscrever(subscription) {
+    const json = await Parceiro._request("/parceiros/notificacoes/inscrever", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+    });
+    return extrairData(json);
+  },
+  async listar() {
+    const json = await Parceiro._request("/parceiros/notificacoes");
+    return extrairData(json) || [];
+  },
+  async contarNaoLidas() {
+    const json = await Parceiro._request("/parceiros/notificacoes/nao-lidas");
+    return extrairData(json) || 0;
+  },
+  async marcarLida(id) {
+    const json = await Parceiro._request(`/parceiros/notificacoes/${id}/lida`, { method: "PATCH" });
+    return extrairData(json);
+  },
+};
+
 function montarFormDataOferta(dados) {
   const form = new FormData();
   form.append("categoria", dados.categoria);

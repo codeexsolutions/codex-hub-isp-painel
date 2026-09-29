@@ -6,7 +6,7 @@ import { useToast } from "../../components/Toast";
 
 export default function ParceiroPerfilPage() {
   const toast = useToast();
-  const [form, setForm] = useState({ nome: "", cidade: "", uf: "", endereco: "", contato: "" });
+  const [form, setForm] = useState({ nome: "", cidade: "", uf: "", endereco: "", contato: "", pix_chave: "" });
   const [usuario, setUsuario] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,6 +26,7 @@ export default function ParceiroPerfilPage() {
         uf: p?.uf || "",
         endereco: p?.endereco || "",
         contato: p?.contato || "",
+        pix_chave: p?.pix_chave || "",
       });
       setUsuario(p?.usuario || "");
     } catch (err) {
@@ -49,6 +50,7 @@ export default function ParceiroPerfilPage() {
         uf: form.uf.trim().toUpperCase() || null,
         endereco: form.endereco.trim() || null,
         contato: form.contato.trim() || null,
+        pix_chave: form.pix_chave.trim() || null,
       });
       toast("Perfil atualizado");
     } catch (err) {
@@ -113,6 +115,15 @@ export default function ParceiroPerfilPage() {
         <div>
           <Label>Contato</Label>
           <Input value={form.contato} onChange={set("contato")} placeholder="Telefone/WhatsApp" />
+        </div>
+
+        <div>
+          <Label>Chave PIX</Label>
+          <Input value={form.pix_chave} onChange={set("pix_chave")} placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" />
+          <Help>
+            Mostrada pro cliente no app pra ele pagar <strong>direto pra você</strong> na hora de retirar a
+            oferta. O Synk não recebe nem participa desse pagamento — é só uma exibição.
+          </Help>
         </div>
 
         <div className="flex justify-end pt-2">

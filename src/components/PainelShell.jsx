@@ -1,6 +1,9 @@
 import { LogOut } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
-export default function PainelShell({ marca, abas, aba, onAbaChange, onLogout, children }) {
+// notificationStore é opcional — só o painel do parceiro passa
+// (NotificacoesParceiro); o Admin, que também usa este shell, fica sem sino.
+export default function PainelShell({ marca, abas, aba, onAbaChange, onLogout, notificationStore, children }) {
   return (
     <div className="min-h-dvh bg-canvas">
       <header className="flex items-center justify-between px-6 lg:px-8 py-5 border-b border-border bg-surface/70 backdrop-blur-md sticky top-0 z-10">
@@ -22,12 +25,15 @@ export default function PainelShell({ marca, abas, aba, onAbaChange, onLogout, c
             ))}
           </nav>
         </div>
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-2 text-xs text-text-dim hover:text-danger transition-colors"
-        >
-          <LogOut size={14} strokeWidth={1.6} /> Sair
-        </button>
+        <div className="flex items-center gap-3">
+          {notificationStore && <NotificationBell store={notificationStore} />}
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2 text-xs text-text-dim hover:text-danger transition-colors"
+          >
+            <LogOut size={14} strokeWidth={1.6} /> Sair
+          </button>
+        </div>
       </header>
 
       <div className="p-6 lg:p-8">{children}</div>

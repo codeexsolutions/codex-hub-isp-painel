@@ -9,6 +9,8 @@ const CATEGORIAS = [
   { value: "entretenimento", label: "Entretenimento" },
   { value: "consumo_local", label: "Consumo local" },
   { value: "digital", label: "Digital" },
+  { value: "comercio", label: "Comércio" },
+  { value: "servico", label: "Serviço" },
 ];
 
 const labelCategoria = (v) => CATEGORIAS.find((c) => c.value === v)?.label || v;

@@ -2,7 +2,7 @@
 // central de notificações do PAINEL — usa o request() autenticado já
 // existente em store.js (Notificacoes.obterChavePublica /
 // NotificacoesPainel.inscrever) em vez de repetir lógica de fetch aqui.
-import { Notificacoes, NotificacoesPainel } from "./store";
+import { Notificacoes, NotificacoesPainel, NotificacoesParceiro } from "./store";
 
 export async function registrarServiceWorker() {
   if (!("serviceWorker" in navigator)) return null;
@@ -50,6 +50,39 @@ export async function registrarPushNotificationPainel() {
   const auth = subscription.getKey("auth");
 
   await NotificacoesPainel.inscrever({
+    device: "",
+    endpoint: subscription.endpoint,
+    expirationTime: subscription.expirationTime,
+    keys: {
+      p256dh: p256dh ? arrayBufferToBase64(p256dh) : "",
+      auth: auth ? arrayBufferToBase64(auth) : "",
+    },
+  });
+}
+
+// Mesmo fluxo, para o painel do PARCEIRO (sino de novas compras).
+export async function registrarPushNotificationParceiro() {
+  const registration = await registrarServiceWorker();
+  if (!registration) return;
+
+  const permitido = await solicitarPermissaoNotificacao();
+  if (!permitido) return;
+
+  const chavePublica = await Notificacoes.obterChavePublica();
+  if (!chavePublica) return;
+
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(chavePublica),
+    });
+  }
+
+  const p256dh = subscription.getKey("p256dh");
+  const auth = subscription.getKey("auth");
+
+  await NotificacoesParceiro.inscrever({
     device: "",
     endpoint: subscription.endpoint,
     expirationTime: subscription.expirationTime,

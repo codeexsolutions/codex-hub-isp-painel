@@ -181,11 +181,11 @@ export default function AdminComissaoPage() {
                       <td className="px-4 py-3 text-text-sub">{semFatura ? "-" : brl(item.valor)}</td>
                       <td className="px-4 py-3">
                         {status ? (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${corStatusFatura(status)}`}>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border whitespace-nowrap ${corStatusFatura(status)}`}>
                             {LABEL_STATUS_FATURA[status]}
                           </span>
                         ) : (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-surface-2 text-text-dim">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-surface-2 text-text-dim whitespace-nowrap">
                             Nada devido ainda
                           </span>
                         )}

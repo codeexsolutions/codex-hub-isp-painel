@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { ToastProvider } from "./components/Toast";
-import { Parceiro } from "./services/store";
+import { Parceiro, NotificacoesParceiro } from "./services/store";
 import { useSessaoExpirada } from "./hooks/useSessaoExpirada";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
+import { registrarPushNotificationParceiro } from "./services/pushNotification";
 import PainelShell from "./components/PainelShell";
 import ParceiroLoginPage from "./pages/parceiro/ParceiroLoginPage";
 import ParceiroFinanceiroPage from "./pages/parceiro/ParceiroFinanceiroPage";
@@ -28,6 +29,16 @@ export default function ParceiroApp() {
     if (sessaoExpirada) setLogado(false);
   }, [sessaoExpirada]);
 
+  // Pede permissão de notificação e inscreve o dispositivo assim que loga —
+  // mesmo padrão do App.jsx (provedor). Silencioso: se o navegador negar, só
+  // não ativa.
+  useEffect(() => {
+    if (!logado) return;
+    registrarPushNotificationParceiro().catch((error) => {
+      console.error("Erro ao registrar notificações do parceiro:", error);
+    });
+  }, [logado]);
+
   const handleLogout = () => {
     Parceiro.sair();
     limparSessaoExpirada();
@@ -37,7 +48,7 @@ export default function ParceiroApp() {
   return (
     <ToastProvider>
       {logado ? (
-        <PainelShell marca="Parceiro" abas={ABAS} aba={aba} onAbaChange={setAba} onLogout={handleLogout}>
+        <PainelShell marca="Parceiro" abas={ABAS} aba={aba} onAbaChange={setAba} onLogout={handleLogout} notificationStore={NotificacoesParceiro}>
           {aba === "ofertas" && <ParceiroOfertasPage />}
           {aba === "financeiro" && <ParceiroFinanceiroPage />}
           {aba === "cupom" && <ParceiroCupomPage />}
