@@ -39,6 +39,12 @@ export default function AdminLicencasTvPage() {
   const [criarTelefone, setCriarTelefone] = useState("");
   const [criando, setCriando] = useState(false);
 
+  const [revendedores, setRevendedores] = useState([]);
+  const [loadingRevendedores, setLoadingRevendedores] = useState(true);
+  const [novoRevendedor, setNovoRevendedor] = useState({ nome: "", usuario: "", senha: "" });
+  const [criandoRevendedor, setCriandoRevendedor] = useState(false);
+  const [salvandoRevendedorId, setSalvandoRevendedorId] = useState(null);
+
   const load = useCallback(async () => {
     try {
       const dados = await Admin.obterConfigLicencaTv();
@@ -65,7 +71,47 @@ export default function AdminLicencasTvPage() {
     }
   }, []);
 
-  useEffect(() => { load(); loadLicencas(); }, [load, loadLicencas]);
+  const loadRevendedores = useCallback(async () => {
+    try {
+      setRevendedores(await Admin.listarRevendedores());
+    } catch (err) {
+      toast(err.message || "Erro ao carregar revendedores");
+    } finally {
+      setLoadingRevendedores(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); loadLicencas(); loadRevendedores(); }, [load, loadLicencas, loadRevendedores]);
+
+  const criarRevendedor = async () => {
+    if (!novoRevendedor.nome.trim() || !novoRevendedor.usuario.trim() || !novoRevendedor.senha.trim()) {
+      toast("Informe nome, usuário e senha");
+      return;
+    }
+    setCriandoRevendedor(true);
+    try {
+      await Admin.criarRevendedor(novoRevendedor.nome.trim(), novoRevendedor.usuario.trim(), novoRevendedor.senha.trim());
+      setNovoRevendedor({ nome: "", usuario: "", senha: "" });
+      await loadRevendedores();
+      toast("Revendedor criado — acesso em /revendedor");
+    } catch (err) {
+      toast(err.message || "Erro ao criar revendedor");
+    } finally {
+      setCriandoRevendedor(false);
+    }
+  };
+
+  const alternarStatusRevendedor = async (revendedor) => {
+    setSalvandoRevendedorId(revendedor.id);
+    try {
+      await Admin.definirStatusRevendedor(revendedor.id, revendedor.status !== "ATIVO");
+      await loadRevendedores();
+    } catch (err) {
+      toast(err.message || "Erro ao atualizar status");
+    } finally {
+      setSalvandoRevendedorId(null);
+    }
+  };
 
   const setCampo = (campo) => (e) => setConfig((c) => ({ ...c, [campo]: e.target.value }));
 
@@ -221,6 +267,64 @@ export default function AdminLicencasTvPage() {
         >
           {criando ? "Criando…" : "Criar licença"}
         </button>
+      </div>
+
+      <div className="bg-surface rounded-2xl border border-border p-5 space-y-4 max-w-sm">
+        <div>
+          <h3 className="text-sm text-text font-display">Revendedores de IPTV</h3>
+          <p className="text-xs text-text-dim mt-1">
+            Painel básico (em /revendedor) pra cada revendedor cadastrar e gerenciar as licenças
+            dos próprios clientes, sem precisar do seu acesso de admin.
+          </p>
+        </div>
+
+        <div>
+          <Label>Nome</Label>
+          <Input value={novoRevendedor.nome} onChange={(e) => setNovoRevendedor((f) => ({ ...f, nome: e.target.value }))} placeholder="Nome do revendedor" />
+        </div>
+
+        <div>
+          <Label>Usuário</Label>
+          <Input value={novoRevendedor.usuario} onChange={(e) => setNovoRevendedor((f) => ({ ...f, usuario: e.target.value }))} placeholder="usuário de acesso" />
+        </div>
+
+        <div>
+          <Label>Senha</Label>
+          <Input value={novoRevendedor.senha} onChange={(e) => setNovoRevendedor((f) => ({ ...f, senha: e.target.value }))} type="text" placeholder="senha de acesso" />
+        </div>
+
+        <button
+          onClick={criarRevendedor}
+          disabled={criandoRevendedor}
+          className="px-6 py-2.5 rounded-xl bg-accent text-white text-sm
+            hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50"
+        >
+          {criandoRevendedor ? "Criando…" : "Criar revendedor"}
+        </button>
+
+        {!loadingRevendedores && revendedores.length > 0 && (
+          <div className="border-t border-border pt-4 space-y-2">
+            {revendedores.map((r) => (
+              <div key={r.id} className="flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-text">{r.nome}</span>
+                  <span className="text-text-dim ml-2">({r.usuario})</span>
+                </div>
+                <button
+                  onClick={() => alternarStatusRevendedor(r)}
+                  disabled={salvandoRevendedorId === r.id}
+                  className={`px-2.5 py-1 rounded-full border text-[10px] uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                    r.status === "ATIVO"
+                      ? "border-success/30 bg-success/10 text-success"
+                      : "border-border bg-surface-2 text-text-dim"
+                  }`}
+                >
+                  {r.status}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

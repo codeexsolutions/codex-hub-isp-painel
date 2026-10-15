@@ -20,6 +20,9 @@ export default function ProvedorTab({ provedor, onUpdate }) {
   const [resourceRebootOnu, setResourceRebootOnu] = useState("");
   const [savingRebootOnu, setSavingRebootOnu] = useState(false);
 
+  const [testandoConexao, setTestandoConexao] = useState(false);
+  const [resultadoConexao, setResultadoConexao] = useState(null);
+
   const [assuntos, setAssuntos] = useState([]);
   const [novoAssunto, setNovoAssunto] = useState({ nome: "", id_assunto_ixc: "" });
   const [salvandoAssunto, setSalvandoAssunto] = useState(false);
@@ -73,6 +76,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
       dominio_ixc: provedor.dominio_ixc || "",
       dominio_mkauth: provedor.dominio_mkauth || "",
       mkauth_client_id: provedor.mkauth_client_id || "",
+      dominio_sgp: provedor.dominio_sgp || "",
       chave_api_gerenciador: provedor.chave_api_gerenciador || "",
     });
   }, [provedor]);
@@ -143,6 +147,19 @@ export default function ProvedorTab({ provedor, onUpdate }) {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const testarConexaoIxc = async () => {
+    setTestandoConexao(true);
+    setResultadoConexao(null);
+    try {
+      const resultado = await Provedores.testarConexaoIxc();
+      setResultadoConexao(resultado);
+    } catch (err) {
+      setResultadoConexao({ ok: false, message: err.message || "Erro ao testar conexão." });
+    } finally {
+      setTestandoConexao(false);
+    }
+  };
+
   const salvar = async () => {
     setSaving(true);
     try {
@@ -159,6 +176,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
         dominio_ixc: form.dominio_ixc || null,
         dominio_mkauth: form.dominio_mkauth || null,
         mkauth_client_id: form.mkauth_client_id || null,
+        dominio_sgp: form.dominio_sgp || null,
         chave_api_gerenciador: form.chave_api_gerenciador || null,
       };
       const updated = await Provedores.atualizar(provedor.id, patch);
@@ -250,9 +268,13 @@ export default function ProvedorTab({ provedor, onUpdate }) {
               <option value="RECEITANET">RECEITANET</option>
               <option value="IXCSOFT">IXCSOFT</option>
               <option value="MKAUTH">MK-AUTH</option>
+              <option value="SGP">SGP</option>
             </Select>
             {form.gerenciador === "MKAUTH" && (
               <Help>Integração com MK-Auth ainda em preparação — os dados aqui já ficam salvos, prontos pra quando a integração for concluída.</Help>
+            )}
+            {form.gerenciador === "SGP" && (
+              <Help>Integração com SGP ainda em preparação — os dados aqui já ficam salvos, prontos pra quando a integração for concluída.</Help>
             )}
           </div>
 
@@ -274,6 +296,11 @@ export default function ProvedorTab({ provedor, onUpdate }) {
                 <Input value={form.dominio_mkauth || ""} onChange={set("dominio_mkauth")} placeholder="ex.: 192.168.88.2 ou painel.suaempresa.com.br" />
                 <Help>Precisa de HTTPS com certificado válido</Help>
               </div>
+            ) : form.gerenciador === "SGP" ? (
+              <div>
+                <Label>Domínio SGP</Label>
+                <Input value={form.dominio_sgp || ""} onChange={set("dominio_sgp")} placeholder="ex.: suaempresa.sgp.net.br" />
+              </div>
             ) : (
               <div>
                 <Label>Domínio IXC</Label>
@@ -282,6 +309,26 @@ export default function ProvedorTab({ provedor, onUpdate }) {
               </div>
             )}
           </FieldRow>
+
+          {form.gerenciador === "IXCSOFT" && (
+            <div>
+              <button
+                type="button"
+                onClick={testarConexaoIxc}
+                disabled={testandoConexao}
+                className="text-[11px] px-2.5 py-1.5 rounded-lg bg-surface-2 text-text-sub border border-border hover:text-text transition-colors disabled:opacity-50"
+              >
+                {testandoConexao ? "Testando…" : "Testar conexão com o IXC"}
+              </button>
+              {resultadoConexao && (
+                <p className={`text-[11px] mt-2 ${resultadoConexao.ok ? "text-success" : "text-danger"}`}>
+                  {resultadoConexao.ok
+                    ? "Conectou certinho — credencial válida."
+                    : `Falhou: ${resultadoConexao.message}`}
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <Label>{form.gerenciador === "MKAUTH" ? "Client Secret (MK-Auth)" : "Chave API gerenciador"}</Label>
@@ -303,6 +350,8 @@ export default function ProvedorTab({ provedor, onUpdate }) {
             <Help>
               {form.gerenciador === "MKAUTH"
                 ? "Gerado em CADASTROS > Controle de usuários > (usuário) > API, no painel MK-Auth."
+                : form.gerenciador === "SGP"
+                ? "Token/app de integração do SGP — campo salvo, aguardando a integração real ser implementada."
                 : "Usada para o app buscar faturas, consumo e dados cadastrais do cliente."}
             </Help>
           </div>

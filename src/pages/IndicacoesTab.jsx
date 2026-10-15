@@ -31,7 +31,7 @@ export default function IndicacoesTab({ provedor }) {
     setEfetivandoId(indicacao.id);
     try {
       const resultado = await Indicacoes.efetivar(indicacao.id);
-      setLista((atual) => atual.map((i) => (i.id === indicacao.id ? { ...i, status: "efetivada" } : i)));
+      setLista((atual) => atual.map((i) => (i.id === indicacao.id ? { ...i, ...resultado?.indicacao, status: "efetivada" } : i)));
       toast(`Indicação efetivada — ${resultado?.extrato?.pontos ?? ""} pontos creditados a ${indicacao.nome_cliente}`);
     } catch (err) {
       toast(err.message || "Erro ao efetivar indicação");
@@ -70,6 +70,8 @@ export default function IndicacoesTab({ provedor }) {
                 <th className="px-5 py-3">Indicado</th>
                 <th className="px-5 py-3">Contato</th>
                 <th className="px-5 py-3">Mensagem</th>
+                <th className="px-5 py-3">Indicado em</th>
+                <th className="px-5 py-3">Efetivada em</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3"></th>
               </tr>
@@ -107,6 +109,16 @@ export default function IndicacoesTab({ provedor }) {
                     <div className="text-xs text-text-sub max-w-xs truncate">
                       {i.mensagem || "Nenhuma mensagem enviada"}
                     </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className="text-xs text-text-sub whitespace-nowrap">
+                      {i.created_at ? new Date(i.created_at).toLocaleDateString("pt-BR") : "—"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className="text-xs text-text-sub whitespace-nowrap">
+                      {i.efetivado_em ? new Date(i.efetivado_em).toLocaleDateString("pt-BR") : "—"}
+                    </span>
                   </td>
                   <td className="px-5 py-3">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border ${

@@ -200,6 +200,17 @@ export const Provedores = {
     return lista[i];
   },
 
+  // Checagem rápida de credencial do IXC — avisa na hora quando ela cai
+  // (revogada/trocada no painel IXC), em vez de só descobrir quando um
+  // cliente reclama que o app parou de mostrar dados.
+  async testarConexaoIxc() {
+    if (CONFIG.USE_API) {
+      const json = await request("/painel/provedor/ixc/testar-conexao", { method: "POST" });
+      return extrairData(json);
+    }
+    return { ok: true };
+  },
+
   async _obterAtual() {
     if (CONFIG.USE_API) {
       const token = localStorage.getItem(DB_KEYS.token);
@@ -702,6 +713,19 @@ export const Admin = {
     const json = await this._request(`/painel/admin/licencas-tv/${id}/link-lista`, { method: "PATCH", body: JSON.stringify({ link }) });
     return extrairData(json);
   },
+  // Contas de revendedor de IPTV (painel básico) — só o admin cria.
+  async criarRevendedor(nome, usuario, senha) {
+    const json = await this._request("/painel/admin/revendedores", { method: "POST", body: JSON.stringify({ nome, usuario, senha }) });
+    return extrairData(json);
+  },
+  async listarRevendedores() {
+    const json = await this._request("/painel/admin/revendedores");
+    return extrairData(json) || [];
+  },
+  async definirStatusRevendedor(id, ativo) {
+    const json = await this._request(`/painel/admin/revendedores/${id}/status`, { method: "PATCH", body: JSON.stringify({ ativo }) });
+    return extrairData(json);
+  },
   async listarPlanos() {
     const json = await this._request("/painel/admin/planos");
     return extrairData(json) || [];
@@ -828,6 +852,69 @@ export const Parceiro = {
   },
 };
 
+const REVENDEDOR_TOKEN_KEY = "hubisp_revendedor_token";
+
+// Painel básico do revendedor de IPTV — gerencia só as licenças do Synk TV
+// dos próprios clientes (mesma tabela licencas_tv do admin, mas com dono).
+// Conta criada só pelo admin Synk (sem login/cadastro público).
+export const Revendedor = {
+  async login(usuario, senha) {
+    const json = await request("/revendedores/login", {
+      method: "POST",
+      body: JSON.stringify({ usuario, senha }),
+    });
+    const { token } = extrairData(json);
+    localStorage.setItem(REVENDEDOR_TOKEN_KEY, token);
+    return token;
+  },
+  atual() {
+    const token = localStorage.getItem(REVENDEDOR_TOKEN_KEY);
+    if (!token || tokenExpirado(token)) {
+      localStorage.removeItem(REVENDEDOR_TOKEN_KEY);
+      return null;
+    }
+    return token;
+  },
+  sair() {
+    localStorage.removeItem(REVENDEDOR_TOKEN_KEY);
+  },
+  async _request(path, options = {}) {
+    const token = localStorage.getItem(REVENDEDOR_TOKEN_KEY);
+    const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}), "Content-Type": "application/json" };
+    const res = await fetch(`${CONFIG.API_BASE}${path}`, { ...options, headers });
+    const texto = await res.text();
+    let json = null;
+    try { json = texto ? JSON.parse(texto) : null; } catch {}
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem(REVENDEDOR_TOKEN_KEY);
+      avisarSessaoExpirada("revendedor");
+      throw new Error((json && json.message) || "Sessão do revendedor expirada.");
+    }
+    if (!res.ok) throw new Error((json && json.message) || texto || `Erro ${res.status}`);
+    return json;
+  },
+  async listarLicencas() {
+    const json = await this._request("/revendedores/licencas");
+    return extrairData(json) || [];
+  },
+  async criarLicenca(nome, telefone) {
+    const json = await this._request("/revendedores/licencas", { method: "POST", body: JSON.stringify({ nome, telefone }) });
+    return extrairData(json);
+  },
+  async aprovarLicenca(id) {
+    const json = await this._request(`/revendedores/licencas/${id}/aprovar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async cancelarLicenca(id) {
+    const json = await this._request(`/revendedores/licencas/${id}/cancelar`, { method: "PATCH" });
+    return extrairData(json);
+  },
+  async definirLinkPagamentoLista(id, link) {
+    const json = await this._request(`/revendedores/licencas/${id}/link-lista`, { method: "PATCH", body: JSON.stringify({ link }) });
+    return extrairData(json);
+  },
+};
+
 // Central de notificações do painel do PARCEIRO (sino) — separada da
 // NotificacoesPainel (provedor); usa a autenticação do parceiro.
 export const NotificacoesParceiro = {
@@ -893,6 +980,14 @@ export const Recompensas = {
   async concederPontos(dados) {
     if (CONFIG.USE_API) {
       const json = await request("/painel/provedor/pontos/conceder", { method: "POST", body: JSON.stringify(dados) });
+      return extrairData(json);
+    }
+  },
+  // valida o cupom que o cliente recebeu ao resgatar uma recompensa, na hora de
+  // entregar o benefício — marca o cupom como usado pra não aceitar duas vezes
+  async validarCupom(cupom) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/pontos/cupom/${encodeURIComponent(cupom)}/validar`, { method: "PATCH" });
       return extrairData(json);
     }
   },

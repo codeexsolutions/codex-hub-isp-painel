@@ -26,6 +26,7 @@ import PlanosMovelTab from "./pages/PlanosMovelTab";
 import LandingPageTab from "./pages/LandingPageTab";
 import AdminApp from "./AdminApp";
 import ParceiroApp from "./ParceiroApp";
+import RevendedorApp from "./RevendedorApp";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 export default function App() {
@@ -44,6 +45,9 @@ function AppRoteado() {
   }
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/parceiro")) {
     return <ParceiroApp />;
+  }
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/revendedor")) {
+    return <RevendedorApp />;
   }
   return <ProviderApp />;
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Award, Pencil, Trash2, Gift } from "lucide-react";
+import { Award, Pencil, Trash2, Gift, Ticket } from "lucide-react";
 import Modal from "../components/Modal";
 import { Label, Input, Select, Textarea } from "../components/Field";
 import { Recompensas } from "../services/store";
@@ -15,6 +15,10 @@ export default function RecompensasTab() {
   const [concederOpen, setConcederOpen] = useState(false);
   const [concederForm, setConcederForm] = useState(initialConcederForm());
   const [concedendo, setConcedendo] = useState(false);
+  const [cupomOpen, setCupomOpen] = useState(false);
+  const [cupomCodigo, setCupomCodigo] = useState("");
+  const [validandoCupom, setValidandoCupom] = useState(false);
+  const [cupomResultado, setCupomResultado] = useState(null);
 
   function initialForm() {
     return { titulo: "", descricao: "", pontos_necessarios: "", ativo: "true" };
@@ -115,6 +119,27 @@ export default function RecompensasTab() {
     }
   };
 
+  const abrirValidarCupom = () => {
+    setCupomCodigo("");
+    setCupomResultado(null);
+    setCupomOpen(true);
+  };
+
+  const validarCupom = async () => {
+    if (!cupomCodigo.trim()) { toast("Informe o código do cupom"); return; }
+    setValidandoCupom(true);
+    setCupomResultado(null);
+    try {
+      const extrato = await Recompensas.validarCupom(cupomCodigo.trim());
+      setCupomResultado({ ok: true, extrato });
+      toast(`Cupom válido — ${extrato.cliente_nome}, ${Math.abs(extrato.pontos)} pontos`);
+    } catch (err) {
+      setCupomResultado({ ok: false, mensagem: err.message || "Erro ao validar cupom" });
+    } finally {
+      setValidandoCupom(false);
+    }
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -123,6 +148,13 @@ export default function RecompensasTab() {
           pontos manualmente pra clientes que pagam em dia ou tiveram uma indicação efetivada.
         </p>
         <div className="flex gap-2 shrink-0">
+          <button
+            onClick={abrirValidarCupom}
+            className="px-4 py-2 rounded-xl border border-border text-text-sub text-sm
+              hover:border-accent/40 hover:text-accent transition-colors duration-200"
+          >
+            <Ticket size={14} className="inline -mt-0.5 mr-1.5" /> Validar cupom
+          </button>
           <button
             onClick={() => setConcederOpen(true)}
             className="px-4 py-2 rounded-xl border border-border text-text-sub text-sm
@@ -229,6 +261,49 @@ export default function RecompensasTab() {
               className="px-5 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors disabled:opacity-50"
             >
               {concedendo ? "Concedendo…" : "Conceder pontos"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+      <Modal open={cupomOpen} onClose={() => setCupomOpen(false)} title="Validar cupom de resgate">
+        <div className="space-y-4">
+          <p className="text-xs text-text-dim">
+            Digite o código que o cliente mostrou pra confirmar o resgate da recompensa. Cada
+            cupom só pode ser validado uma vez.
+          </p>
+          <div>
+            <Label>Código do cupom</Label>
+            <Input
+              value={cupomCodigo}
+              onChange={(e) => setCupomCodigo(e.target.value.toUpperCase())}
+              placeholder="ex.: 7KPX3Q2M"
+              className="uppercase tracking-wider"
+            />
+          </div>
+
+          {cupomResultado?.ok && (
+            <div className="text-xs rounded-xl border border-success/30 bg-success/8 text-success p-3 space-y-0.5">
+              <div>Cupom válido ✓</div>
+              <div className="text-text-sub">Cliente: {cupomResultado.extrato.cliente_nome}</div>
+              <div className="text-text-sub">Pontos resgatados: {Math.abs(cupomResultado.extrato.pontos)}</div>
+            </div>
+          )}
+          {cupomResultado && !cupomResultado.ok && (
+            <div className="text-xs rounded-xl border border-danger/30 bg-danger/8 text-danger p-3">
+              {cupomResultado.mensagem}
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <button onClick={() => setCupomOpen(false)} className="px-4 py-2 rounded-xl text-sm text-text-sub hover:text-text border border-border hover:border-border-2 transition-colors">
+              Fechar
+            </button>
+            <button
+              onClick={validarCupom}
+              disabled={validandoCupom}
+              className="px-5 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors disabled:opacity-50"
+            >
+              {validandoCupom ? "Validando…" : "Validar cupom"}
             </button>
           </div>
         </div>
