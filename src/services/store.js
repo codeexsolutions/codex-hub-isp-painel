@@ -89,6 +89,8 @@ function normalizarProvedor(raw) {
     dominio_ixc: raw.DominioIxc ?? null,
     dominio_mkauth: raw.DominioMkAuth ?? null,
     mkauth_client_id: raw.MkAuthClientId ?? null,
+    dominio_sgp: raw.DominioSgp ?? null,
+    sgp_app: raw.SgpApp ?? null,
     usuario: raw.Usuario,
     senha: raw._Senha,
   };

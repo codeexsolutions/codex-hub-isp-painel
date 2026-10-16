@@ -77,6 +77,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
       dominio_mkauth: provedor.dominio_mkauth || "",
       mkauth_client_id: provedor.mkauth_client_id || "",
       dominio_sgp: provedor.dominio_sgp || "",
+      sgp_app: provedor.sgp_app || "",
       chave_api_gerenciador: provedor.chave_api_gerenciador || "",
     });
   }, [provedor]);
@@ -177,6 +178,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
         dominio_mkauth: form.dominio_mkauth || null,
         mkauth_client_id: form.mkauth_client_id || null,
         dominio_sgp: form.dominio_sgp || null,
+        sgp_app: form.sgp_app || null,
         chave_api_gerenciador: form.chave_api_gerenciador || null,
       };
       const updated = await Provedores.atualizar(provedor.id, patch);
@@ -273,9 +275,6 @@ export default function ProvedorTab({ provedor, onUpdate }) {
             {form.gerenciador === "MKAUTH" && (
               <Help>Integração com MK-Auth ainda em preparação — os dados aqui já ficam salvos, prontos pra quando a integração for concluída.</Help>
             )}
-            {form.gerenciador === "SGP" && (
-              <Help>Integração com SGP ainda em preparação — os dados aqui já ficam salvos, prontos pra quando a integração for concluída.</Help>
-            )}
           </div>
 
           <FieldRow>
@@ -283,6 +282,12 @@ export default function ProvedorTab({ provedor, onUpdate }) {
               <div>
                 <Label>Client ID (MK-Auth)</Label>
                 <Input value={form.mkauth_client_id || ""} onChange={set("mkauth_client_id")} placeholder="ex.: Client_Id_662eaa47..." />
+              </div>
+            ) : form.gerenciador === "SGP" ? (
+              <div>
+                <Label>App SGP</Label>
+                <Input value={form.sgp_app || ""} onChange={set("sgp_app")} placeholder="ex.: tsmx" />
+                <Help>Nome do App cadastrado em Sistema {'>'} Ferramentas {'>'} Painel Admin {'>'} Tokens, no SGP.</Help>
               </div>
             ) : (
               <div>
@@ -300,6 +305,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
               <div>
                 <Label>Domínio SGP</Label>
                 <Input value={form.dominio_sgp || ""} onChange={set("dominio_sgp")} placeholder="ex.: suaempresa.sgp.net.br" />
+                <Help>Sem "https://", só o domínio do painel.</Help>
               </div>
             ) : (
               <div>
@@ -331,7 +337,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
           )}
 
           <div>
-            <Label>{form.gerenciador === "MKAUTH" ? "Client Secret (MK-Auth)" : "Chave API gerenciador"}</Label>
+            <Label>{form.gerenciador === "MKAUTH" ? "Client Secret (MK-Auth)" : form.gerenciador === "SGP" ? "Token SGP" : "Chave API gerenciador"}</Label>
             <div className="relative">
               <Input
                 value={form.chave_api_gerenciador || ""}
@@ -351,7 +357,7 @@ export default function ProvedorTab({ provedor, onUpdate }) {
               {form.gerenciador === "MKAUTH"
                 ? "Gerado em CADASTROS > Controle de usuários > (usuário) > API, no painel MK-Auth."
                 : form.gerenciador === "SGP"
-                ? "Token/app de integração do SGP — campo salvo, aguardando a integração real ser implementada."
+                ? "Token gerado em Sistema > Ferramentas > Painel Admin > Tokens, no SGP."
                 : "Usada para o app buscar faturas, consumo e dados cadastrais do cliente."}
             </Help>
           </div>
