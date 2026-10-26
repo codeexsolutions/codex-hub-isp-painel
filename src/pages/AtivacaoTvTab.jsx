@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Label, Input, Help } from "../components/Field";
 import { AtivacaoTv, IptvDns } from "../services/store";
 import { useToast } from "../components/Toast";
+import { brl } from "../utils/faturamento";
 
 export default function AtivacaoTvTab() {
   const toast = useToast();
   const [lista, setLista] = useState(null);
   const [nomeCliente, setNomeCliente] = useState("");
+  const [valorAcesso, setValorAcesso] = useState("");
   const [gerando, setGerando] = useState(false);
   const [revogandoId, setRevogandoId] = useState(null);
 
@@ -43,8 +45,9 @@ export default function AtivacaoTvTab() {
   const gerar = async () => {
     setGerando(true);
     try {
-      await AtivacaoTv.gerar(nomeCliente.trim() || null);
+      await AtivacaoTv.gerar(nomeCliente.trim() || null, valorAcesso.trim() ? Number(valorAcesso) : null);
       setNomeCliente("");
+      setValorAcesso("");
       toast("Código de ativação gerado");
       carregar();
     } catch (err) {
@@ -114,6 +117,11 @@ export default function AtivacaoTvTab() {
             <Input value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} placeholder="Ex.: João da Silva" />
             <Help>Ajuda a identificar pra quem foi enviado cada código na lista abaixo.</Help>
           </div>
+          <div className="w-full sm:max-w-[160px]">
+            <Label>Valor do acesso (opcional)</Label>
+            <Input value={valorAcesso} onChange={(e) => setValorAcesso(e.target.value)} placeholder="R$ 0,00" inputMode="decimal" />
+            <Help>Valor que você cobra do cliente pelo acesso IPTV — não é o preço da ativação.</Help>
+          </div>
           <button
             onClick={gerar}
             disabled={gerando}
@@ -142,6 +150,7 @@ export default function AtivacaoTvTab() {
                     <div className="text-sm text-text font-mono tracking-wider">{item.codigo}</div>
                     <div className="text-[11px] text-text-dim mt-0.5 truncate">
                       {item.cliente_nome || "Sem nome"}
+                      {item.valor != null && ` · ${brl(item.valor)}`}
                       {item.usado_em && ` · usado em ${new Date(item.usado_em).toLocaleDateString("pt-BR")}`}
                     </div>
                   </div>
