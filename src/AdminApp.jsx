@@ -12,6 +12,7 @@ import AdminPontosPage from "./pages/admin/AdminPontosPage";
 import AdminRelatoriosPage from "./pages/admin/AdminRelatoriosPage";
 import AdminParceirosPage from "./pages/admin/AdminParceirosPage";
 import AdminFaturamentoPage from "./pages/admin/AdminFaturamentoPage";
+import AdminNotificacoesPage from "./pages/admin/AdminNotificacoesPage";
 import AdminPlanosPage from "./pages/admin/AdminPlanosPage";
 import AdminIptvPage from "./pages/admin/AdminIptvPage";
 import AdminLicencasTvPage from "./pages/admin/AdminLicencasTvPage";
@@ -44,6 +45,7 @@ export default function AdminApp() {
           {aba === "relatorios" && <AdminRelatoriosPage />}
           {aba === "parceiros" && <AdminParceirosPage />}
           {aba === "faturamento" && <AdminFaturamentoPage />}
+          {aba === "notificacoes" && <AdminNotificacoesPage />}
           {aba === "planos" && <AdminPlanosPage />}
           {aba === "iptv" && <AdminIptvPage />}
           {aba === "licencas-tv" && <AdminLicencasTvPage />}

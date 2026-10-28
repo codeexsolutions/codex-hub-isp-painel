@@ -8,6 +8,7 @@ const ABAS = [
   { key: "relatorios", label: "Relatórios" },
   { key: "parceiros", label: "Parceiros" },
   { key: "faturamento", label: "Faturamento" },
+  { key: "notificacoes", label: "Notificações" },
   { key: "planos", label: "Planos" },
   { key: "iptv", label: "IPTV" },
   { key: "licencas-tv", label: "Licenças TV" },

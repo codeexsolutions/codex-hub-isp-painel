@@ -1255,6 +1255,23 @@ export const Notificacoes = {
   },
 };
 
+// Envio de push pros assinantes de UM provedor, mas pelo admin Synk — mesmo
+// destino (app do assinante) do objeto Notificacoes acima, só que o admin
+// escolhe o provedor explicitamente em vez de estar logado como ele.
+export const AdminNotificacoes = {
+  async buscarTodosAssinantes(codigoProvedor) {
+    const json = await Admin._request(`/notificacoes/admin/assinantes?codigoProvedor=${encodeURIComponent(codigoProvedor)}`);
+    return extrairData(json) || [];
+  },
+  async enviar(dados) {
+    const json = await Admin._request("/notificacoes/admin/notificar", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return extrairData(json);
+  },
+};
+
 // Central de notificações do PAINEL (sino do provedor) — separada do objeto
 // Notificacoes acima, que é o disparo de push PARA os assinantes do app.
 export const NotificacoesPainel = {
