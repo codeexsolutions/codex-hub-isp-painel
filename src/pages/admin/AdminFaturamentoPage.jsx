@@ -16,7 +16,7 @@ export default function AdminFaturamentoPage() {
   const [salvandoPix, setSalvandoPix] = useState(false);
 
   const [assinaturaModal, setAssinaturaModal] = useState(null); // { codigoProvedor, nome }
-  const [assinaturaForm, setAssinaturaForm] = useState({ valor_mensalidade: "", data_adesao: "", plano_id: "", somar_ativacao_tv: false });
+  const [assinaturaForm, setAssinaturaForm] = useState({ valor_mensalidade: "", data_adesao: "", plano_id: "", valor_lista: "", desconto: "" });
   const [salvandoAssinatura, setSalvandoAssinatura] = useState(false);
   const [planos, setPlanos] = useState([]);
 
@@ -62,7 +62,8 @@ export default function AdminFaturamentoPage() {
       valor_mensalidade: item.valor_mensalidade != null ? String(item.valor_mensalidade) : "",
       data_adesao: item.data_adesao ? String(item.data_adesao).slice(0, 10) : "",
       plano_id: item.plano_id != null ? String(item.plano_id) : "",
-      somar_ativacao_tv: !!item.somar_ativacao_tv,
+      valor_lista: item.valor_lista != null ? String(item.valor_lista) : "",
+      desconto: item.desconto != null ? String(item.desconto) : "",
     });
     setAssinaturaModal({ codigoProvedor: item.codigo_provedor, nome: item.provedor_nome });
   };
@@ -85,7 +86,8 @@ export default function AdminFaturamentoPage() {
         valor_mensalidade: Number(assinaturaForm.valor_mensalidade),
         data_adesao: assinaturaForm.data_adesao,
         plano_id: assinaturaForm.plano_id || null,
-        somar_ativacao_tv: assinaturaForm.somar_ativacao_tv,
+        valor_lista: assinaturaForm.valor_lista.trim() ? Number(assinaturaForm.valor_lista) : null,
+        desconto: assinaturaForm.desconto.trim() ? Number(assinaturaForm.desconto) : null,
       });
       setAssinaturaModal(null);
       await load();
@@ -490,21 +492,32 @@ export default function AdminFaturamentoPage() {
             />
             <p className="text-[11px] text-text-dim mt-1.5">O vencimento mensal é sempre o mesmo dia do mês dessa data.</p>
           </div>
-          <div className="border-t border-border pt-4">
-            <label className="flex items-center gap-2.5 text-sm text-text-sub cursor-pointer">
-              <input
-                type="checkbox"
-                checked={assinaturaForm.somar_ativacao_tv}
-                onChange={(e) => setAssinaturaForm((f) => ({ ...f, somar_ativacao_tv: e.target.checked }))}
-                className="accent-[var(--accent)]"
+          <div className="border-t border-border pt-4 grid grid-cols-2 gap-4">
+            <div>
+              <Label>Valor da lista (R$ por código novo)</Label>
+              <Input
+                value={assinaturaForm.valor_lista}
+                onChange={(e) => setAssinaturaForm((f) => ({ ...f, valor_lista: e.target.value }))}
+                inputMode="decimal"
+                placeholder="ex.: 15.00"
               />
-              Somar o valor de acesso das ativações TV usadas no mês à mensalidade
-            </label>
-            <p className="text-[11px] text-text-dim mt-1.5">
-              Soma, na fatura do mês, o "Valor" que o provedor informou em cada código de Ativação TV
-              usado pelo cliente naquele mês (campo na tela Ativação TV do provedor — valor do acesso
-              IPTV, não da ativação).
-            </p>
+              <p className="text-[11px] text-text-dim mt-1.5">
+                Somado à mensalidade, automático, por código de Ativação TV que o provedor gerar
+                no mês (1 código = 1 cliente novo). Vazio = não cobra.
+              </p>
+            </div>
+            <div>
+              <Label>Desconto mensal (R$)</Label>
+              <Input
+                value={assinaturaForm.desconto}
+                onChange={(e) => setAssinaturaForm((f) => ({ ...f, desconto: e.target.value }))}
+                inputMode="decimal"
+                placeholder="ex.: 20.00"
+              />
+              <p className="text-[11px] text-text-dim mt-1.5">
+                Abatido da mensalidade — pra parceria diferenciada. Vazio = sem desconto.
+              </p>
+            </div>
           </div>
           <div className="flex gap-3 justify-end pt-2">
             <button onClick={() => setAssinaturaModal(null)} className="px-4 py-2 rounded-xl text-sm text-text-sub hover:text-text border border-border hover:border-border-2 transition-colors">

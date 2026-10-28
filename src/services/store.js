@@ -268,11 +268,11 @@ export const AtivacaoTv = {
     return [];
   },
 
-  async gerar(clienteNome, valor) {
+  async gerar(clienteNome) {
     if (CONFIG.USE_API) {
       const json = await request("/painel/provedor/tv-ativacoes", {
         method: "POST",
-        body: JSON.stringify({ clienteNome, valor }),
+        body: JSON.stringify({ clienteNome }),
       });
       return extrairData(json);
     }
