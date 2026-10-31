@@ -9,6 +9,9 @@ export default function AtivacaoTvTab() {
   const [nomeCliente, setNomeCliente] = useState("");
   const [gerando, setGerando] = useState(false);
   const [revogandoId, setRevogandoId] = useState(null);
+  const [nomeEditando, setNomeEditando] = useState({});
+  const [usuarioEditando, setUsuarioEditando] = useState({});
+  const [salvandoNomeId, setSalvandoNomeId] = useState(null);
 
   const [urlDns, setUrlDns] = useState("");
   const [carregandoDns, setCarregandoDns] = useState(true);
@@ -64,6 +67,21 @@ export default function AtivacaoTvTab() {
       toast(err.message || "Erro ao revogar código");
     } finally {
       setRevogandoId(null);
+    }
+  };
+
+  const salvarNome = async (item) => {
+    const nome = (nomeEditando[item.id] ?? item.cliente_nome ?? "").trim();
+    const usuario = (usuarioEditando[item.id] ?? item.cliente_usuario ?? "").trim();
+    setSalvandoNomeId(item.id);
+    try {
+      await AtivacaoTv.renomear(item.id, nome || null, usuario || null);
+      toast("Dados do cliente salvos");
+      carregar();
+    } catch (err) {
+      toast(err.message || "Erro ao salvar dados do cliente");
+    } finally {
+      setSalvandoNomeId(null);
     }
   };
 
@@ -136,15 +154,44 @@ export default function AtivacaoTvTab() {
           <div className="divide-y divide-border">
             {lista.map((item) => {
               const revogado = item.status === "revogado";
+              const nomeAtual = nomeEditando[item.id] ?? item.cliente_nome ?? "";
+              const usuarioAtual = usuarioEditando[item.id] ?? item.cliente_usuario ?? "";
+              const alterado =
+                nomeAtual.trim() !== (item.cliente_nome ?? "").trim() ||
+                usuarioAtual.trim() !== (item.cliente_usuario ?? "").trim();
+              const salvandoNome = salvandoNomeId === item.id;
               return (
-                <div key={item.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm text-text font-mono tracking-wider">{item.codigo}</div>
-                    <div className="text-[11px] text-text-dim mt-0.5 truncate">
-                      {item.cliente_nome || "Sem nome"}
-                      {item.usado_em && ` · usado em ${new Date(item.usado_em).toLocaleDateString("pt-BR")}`}
-                    </div>
+                <div key={item.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 gap-3 flex-wrap sm:flex-nowrap">
+                  <div className="text-sm text-text font-mono tracking-wider shrink-0">{item.codigo}</div>
+
+                  <div className="min-w-0 flex-1">
+                    <Input
+                      value={nomeAtual}
+                      onChange={(e) => setNomeEditando((m) => ({ ...m, [item.id]: e.target.value }))}
+                      placeholder="Nome do cliente"
+                      className="text-xs"
+                    />
                   </div>
+
+                  <div className="min-w-0 flex-1">
+                    <Input
+                      value={usuarioAtual}
+                      onChange={(e) => setUsuarioEditando((m) => ({ ...m, [item.id]: e.target.value }))}
+                      placeholder="Usuário da lista"
+                      className="text-xs"
+                    />
+                  </div>
+
+                  {alterado && (
+                    <button
+                      onClick={() => salvarNome(item)}
+                      disabled={salvandoNome}
+                      className="text-[11px] px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
+                    >
+                      {salvandoNome ? "..." : "Salvar"}
+                    </button>
+                  )}
+
                   <div className="flex items-center gap-3 shrink-0">
                     <span className={`text-[11px] px-2 py-0.5 rounded-full ${
                       revogado ? "bg-danger/10 text-danger" : "bg-accent/10 text-accent"
@@ -161,6 +208,12 @@ export default function AtivacaoTvTab() {
                       </button>
                     )}
                   </div>
+
+                  {item.usado_em && (
+                    <div className="w-full text-[11px] text-text-dim">
+                      usado em {new Date(item.usado_em).toLocaleDateString("pt-BR")}
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -284,6 +284,16 @@ export const AtivacaoTv = {
       return extrairData(json);
     }
   },
+
+  async renomear(id, clienteNome, clienteUsuario) {
+    if (CONFIG.USE_API) {
+      const json = await request(`/painel/provedor/tv-ativacoes/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ clienteNome, clienteUsuario }),
+      });
+      return extrairData(json);
+    }
+  },
 };
 
 // DNS/servidor Xtream próprio do provedor pro app Synk TV — em branco usa
