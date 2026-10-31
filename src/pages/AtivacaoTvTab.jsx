@@ -161,56 +161,58 @@ export default function AtivacaoTvTab() {
                 usuarioAtual.trim() !== (item.cliente_usuario ?? "").trim();
               const salvandoNome = salvandoNomeId === item.id;
               return (
-                <div key={item.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 gap-3 flex-wrap sm:flex-nowrap">
-                  <div className="text-sm text-text font-mono tracking-wider shrink-0">{item.codigo}</div>
+                <div key={item.id} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                    <div className="text-sm text-text font-mono tracking-wider shrink-0">{item.codigo}</div>
 
-                  <div className="min-w-0 flex-1">
-                    <Input
-                      value={nomeAtual}
-                      onChange={(e) => setNomeEditando((m) => ({ ...m, [item.id]: e.target.value }))}
-                      placeholder="Nome do cliente"
-                      className="text-xs"
-                    />
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <Input
+                        value={nomeAtual}
+                        onChange={(e) => setNomeEditando((m) => ({ ...m, [item.id]: e.target.value }))}
+                        placeholder="Nome do cliente"
+                        className="text-xs"
+                      />
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <Input
-                      value={usuarioAtual}
-                      onChange={(e) => setUsuarioEditando((m) => ({ ...m, [item.id]: e.target.value }))}
-                      placeholder="Usuário da lista"
-                      className="text-xs"
-                    />
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <Input
+                        value={usuarioAtual}
+                        onChange={(e) => setUsuarioEditando((m) => ({ ...m, [item.id]: e.target.value }))}
+                        placeholder="Usuário da lista"
+                        className="text-xs"
+                      />
+                    </div>
 
-                  {alterado && (
-                    <button
-                      onClick={() => salvarNome(item)}
-                      disabled={salvandoNome}
-                      className="text-[11px] px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
-                    >
-                      {salvandoNome ? "..." : "Salvar"}
-                    </button>
-                  )}
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-                      revogado ? "bg-danger/10 text-danger" : "bg-accent/10 text-accent"
-                    }`}>
-                      {revogado ? "Revogado" : "Ativo"}
-                    </span>
-                    {!revogado && (
+                    {alterado && (
                       <button
-                        onClick={() => revogar(item.id)}
-                        disabled={revogandoId === item.id}
-                        className="text-xs text-text-dim hover:text-danger transition-colors disabled:opacity-50"
+                        onClick={() => salvarNome(item)}
+                        disabled={salvandoNome}
+                        className="text-[11px] px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
                       >
-                        {revogandoId === item.id ? "Revogando…" : "Revogar"}
+                        {salvandoNome ? "..." : "Salvar"}
                       </button>
                     )}
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full ${
+                        revogado ? "bg-danger/10 text-danger" : "bg-accent/10 text-accent"
+                      }`}>
+                        {revogado ? "Revogado" : "Ativo"}
+                      </span>
+                      {!revogado && (
+                        <button
+                          onClick={() => revogar(item.id)}
+                          disabled={revogandoId === item.id}
+                          className="text-xs text-text-dim hover:text-danger transition-colors disabled:opacity-50"
+                        >
+                          {revogandoId === item.id ? "Revogando…" : "Revogar"}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {item.usado_em && (
-                    <div className="w-full text-[11px] text-text-dim">
+                    <div className="text-[11px] text-text-dim mt-1.5">
                       usado em {new Date(item.usado_em).toLocaleDateString("pt-BR")}
                     </div>
                   )}
