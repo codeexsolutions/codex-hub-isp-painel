@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, useCallback } from "react";
-import { CreditCard, CheckCircle2, XCircle, Printer, Settings, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
+import { CreditCard, CheckCircle2, XCircle, Printer, Settings, ChevronDown, ChevronRight, RotateCcw, Trash2 } from "lucide-react";
 import Modal from "../../components/Modal";
 import { Label, Input, Select } from "../../components/Field";
 import { Admin } from "../../services/store";
@@ -168,6 +168,20 @@ export default function AdminFaturamentoPage() {
     }
   };
 
+  const excluirProvedor = async (item) => {
+    if (!confirm(`Excluir o provedor "${item.provedor_nome}"? Ele some da listagem e do faturamento, e o acesso é bloqueado. Essa ação não apaga os dados do provedor, mas não pode ser desfeita por aqui.`)) return;
+    setSalvandoId(`excluir-${item.codigo_provedor}`);
+    try {
+      await Admin.excluirProvedor(item.codigo_provedor);
+      await load();
+      toast(`${item.provedor_nome} excluído`);
+    } catch (err) {
+      toast(err.message || "Erro ao excluir provedor");
+    } finally {
+      setSalvandoId(null);
+    }
+  };
+
   const toggleProvedor = async (item) => {
     const novoStatus = item.provedor_status === "ATIVO" ? "INATIVO" : "ATIVO";
     setSalvandoId(`status-${item.codigo_provedor}`);
@@ -253,6 +267,8 @@ export default function AdminFaturamentoPage() {
                 const salvandoStatus = salvandoId === `status-${item.codigo_provedor}`;
                 const aberto = expandido === item.codigo_provedor;
                 const temMaisDeUmaPendente = Number(item.faturas_pendentes) > 1;
+                const podeExcluir = Number(item.faturas_atrasadas) >= 3;
+                const excluindo = salvandoId === `excluir-${item.codigo_provedor}`;
                 return (
                   <Fragment key={item.codigo_provedor}>
                     <tr className="border-b border-border last:border-0 hover:bg-surface-2/50 transition-colors">
@@ -363,6 +379,16 @@ export default function AdminFaturamentoPage() {
                                 </>
                               )}
                             </>
+                          )}
+                          {podeExcluir && (
+                            <button
+                              onClick={() => excluirProvedor(item)}
+                              disabled={excluindo}
+                              title="3 ou mais faturas em aberto vencidas — pode excluir o provedor"
+                              className="text-[11px] px-2.5 py-1 rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <Trash2 size={12} /> {excluindo ? "Excluindo…" : "Excluir"}
+                            </button>
                           )}
                         </div>
                       </td>

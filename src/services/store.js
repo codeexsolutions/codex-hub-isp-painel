@@ -556,6 +556,10 @@ export const Admin = {
     });
     return extrairData(json);
   },
+  async excluirProvedor(codigoProvedor) {
+    const json = await this._request(`/painel/admin/provedores/${codigoProvedor}`, { method: "DELETE" });
+    return extrairData(json);
+  },
   // Onboarding rápido — deixa um provedor novo pronto (tema + atendimento +
   // planos + Vitrine + módulos) sem o provedor precisar configurar sozinho.
   async atualizarTema(codigoProvedor, { accent, accent2, nomeFantasia, logoFile, faviconFile, icon192File, icon512File, maskableFile }) {
