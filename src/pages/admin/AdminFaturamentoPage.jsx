@@ -267,7 +267,7 @@ export default function AdminFaturamentoPage() {
                 const salvandoStatus = salvandoId === `status-${item.codigo_provedor}`;
                 const aberto = expandido === item.codigo_provedor;
                 const temMaisDeUmaPendente = Number(item.faturas_pendentes) > 1;
-                const podeExcluir = Number(item.faturas_atrasadas) >= 3;
+                const podeExcluir = Number(item.faturas_pendentes) >= 3;
                 const excluindo = salvandoId === `excluir-${item.codigo_provedor}`;
                 return (
                   <Fragment key={item.codigo_provedor}>
@@ -384,7 +384,7 @@ export default function AdminFaturamentoPage() {
                             <button
                               onClick={() => excluirProvedor(item)}
                               disabled={excluindo}
-                              title="3 ou mais faturas em aberto vencidas — pode excluir o provedor"
+                              title="3 ou mais faturas em aberto — pode excluir o provedor"
                               className="text-[11px] px-2.5 py-1 rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors disabled:opacity-50 flex items-center gap-1"
                             >
                               <Trash2 size={12} /> {excluindo ? "Excluindo…" : "Excluir"}
