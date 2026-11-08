@@ -12,6 +12,7 @@ const ABAS = [
   { key: "planos", label: "Planos" },
   { key: "iptv", label: "IPTV" },
   { key: "licencas-tv", label: "Licenças TV" },
+  { key: "servidores-parceiros", label: "Servidores Parceiros" },
 ];
 
 export default function AdminShell({ aba, onAbaChange, onLogout, children }) {

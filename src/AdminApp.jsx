@@ -16,6 +16,7 @@ import AdminNotificacoesPage from "./pages/admin/AdminNotificacoesPage";
 import AdminPlanosPage from "./pages/admin/AdminPlanosPage";
 import AdminIptvPage from "./pages/admin/AdminIptvPage";
 import AdminLicencasTvPage from "./pages/admin/AdminLicencasTvPage";
+import AdminServidoresParceirosPage from "./pages/admin/AdminServidoresParceirosPage";
 
 export default function AdminApp() {
   const [logado, setLogado] = useState(() => !!Admin.atual());
@@ -49,6 +50,7 @@ export default function AdminApp() {
           {aba === "planos" && <AdminPlanosPage />}
           {aba === "iptv" && <AdminIptvPage />}
           {aba === "licencas-tv" && <AdminLicencasTvPage />}
+          {aba === "servidores-parceiros" && <AdminServidoresParceirosPage />}
         </AdminShell>
       ) : (
         <AdminLoginPage

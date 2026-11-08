@@ -729,6 +729,20 @@ export const Admin = {
     const json = await this._request(`/painel/admin/licencas-tv/${id}/link-lista`, { method: "PATCH", body: JSON.stringify({ link }) });
     return extrairData(json);
   },
+  // Servidores de IPTV parceiros: pagam mensalidade ao Synk e, em troca, os
+  // clientes deles usam o synk-tv com um código parceiro, sem licença.
+  async listarServidoresParceiros() {
+    const json = await this._request("/painel/admin/servidores-parceiros");
+    return extrairData(json) || [];
+  },
+  async criarServidorParceiro(nomeServidor, urlServidor, valorMensal) {
+    const json = await this._request("/painel/admin/servidores-parceiros", { method: "POST", body: JSON.stringify({ nomeServidor, urlServidor, valorMensal }) });
+    return extrairData(json);
+  },
+  async atualizarServidorParceiro(id, dados) {
+    const json = await this._request(`/painel/admin/servidores-parceiros/${id}`, { method: "PATCH", body: JSON.stringify(dados) });
+    return extrairData(json);
+  },
   // Contas de revendedor de IPTV (painel básico) — só o admin cria.
   async criarRevendedor(nome, usuario, senha) {
     const json = await this._request("/painel/admin/revendedores", { method: "POST", body: JSON.stringify({ nome, usuario, senha }) });
